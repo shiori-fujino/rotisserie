@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "rootDir": "src",
+    "outDir": "dist",
+    "esModuleInterop": true,
+    "strict": true,
+    "skipLibCheck": true,          // <- helps avoid type churn in deps
+    "types": ["node"]              // <- picks up Node globals like process
+  },
+  "include": ["src"]
+}
