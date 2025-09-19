@@ -8,9 +8,9 @@ import useRosterData from "./hooks/useRosterData";
 import FiltersBar, { Filters } from "./components/FiltersBar";
 import RosterGrid from "./components/RosterGrid";
 import RefreshIcon from "@mui/icons-material/Refresh";
+import type { RosterItem } from "./types";
 
 export default function App() {
-  const [shuffleSeed, setShuffleSeed] = useState(() => Math.random());
   const [selectedGirl, setSelectedGirl] = useState<RosterItem | null>(null);
   const { data, loading, error } = useRosterData();
   const [filters, setFilters] = useState<Filters>({
@@ -20,18 +20,27 @@ export default function App() {
     layout: "grid",
   });
 
-  // derive shops and origins dynamically
+  // 🔥 Local state for cards (so we can bump counts instantly)
+  const [shuffled, setShuffled] = useState<RosterItem[]>([]);
+
+  // keep shuffled in sync when new data comes in
+  useMemo(() => {
+    if (data.length) {
+      setShuffled(data);
+    }
+  }, [data]);
+
   const shops = useMemo(
-    () => Array.from(new Set(data.map((d) => d.shop).filter(Boolean))).sort(),
-    [data]
+    () => Array.from(new Set(shuffled.map((d) => d.shop).filter(Boolean))).sort(),
+    [shuffled]
   );
   const origins = useMemo(
-    () => Array.from(new Set(data.map((d) => d.origin).filter(Boolean))).sort(),
-    [data]
+    () => Array.from(new Set(shuffled.map((d) => d.origin).filter(Boolean))).sort(),
+    [shuffled]
   );
 
   const filtered = useMemo(() => {
-    let out = data;
+    let out = shuffled;
 
     if (filters.shop) out = out.filter((d) => d.shop === filters.shop);
     if (filters.origin) out = out.filter((d) => d.origin === filters.origin);
@@ -45,12 +54,26 @@ export default function App() {
         break;
     }
 
-    if (shuffleSeed > 0) {
-      out = [...out].sort(() => Math.random() - 0.5);
-    }
-
     return out;
-  }, [data, filters, shuffleSeed]);
+  }, [shuffled, filters]);
+
+  // ✅ bump views instantly
+  const handleViewsUpdated = (girlId: number) => {
+    setShuffled((prev) =>
+      prev.map((item) =>
+        item.id === girlId ? { ...item, views: (item.views || 0) + 1 } : item
+      )
+    );
+  };
+
+  // ✅ bump reviews instantly
+  const handleReviewsUpdated = (girlId: number) => {
+    setShuffled((prev) =>
+      prev.map((item) =>
+        item.id === girlId ? { ...item, reviewsCount: (item.reviewsCount || 0) + 1 } : item
+      )
+    );
+  };
 
   return (
     <Box sx={{ bgcolor: "#fafafa", minHeight: "100vh" }}>
@@ -60,14 +83,7 @@ export default function App() {
             The Rotisserie
           </Typography>
           <Box sx={{ flex: 1 }} />
-          <IconButton
-            onClick={() => {
-              setShuffleSeed((s) => s + 1);
-              // if you have confetti state:
-              // setConfetti(true);
-              // setTimeout(() => setConfetti(false), 1500);
-            }}
-          >
+          <IconButton onClick={() => setShuffled([...shuffled].sort(() => Math.random() - 0.5))}>
             <RefreshIcon />
           </IconButton>
         </Toolbar>
@@ -108,7 +124,8 @@ export default function App() {
             girlId={selectedGirl.id}
             girlName={selectedGirl.name}
             profileUrl={selectedGirl.profileUrl}
-            onViewsUpdated={() => setShuffleSeed((s) => s + 1)}
+            onViewsUpdated={() => handleViewsUpdated(selectedGirl.id)}
+            onReviewsUpdated={() => handleReviewsUpdated(selectedGirl.id)}  // 👈 hooked in
           />
         )}
       </Container>

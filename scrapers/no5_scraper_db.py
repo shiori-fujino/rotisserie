@@ -234,7 +234,11 @@ def main():
         with conn:
             with conn.cursor() as cur:
                 ensure_schema(cur)
-                shop_id = get_or_create_shop(cur, "42 Gladesville", "https://thenightshade.com.au", "Gladesville")
+                shop_id = get_or_create_shop(
+                    cur, 
+                    "No.5 Marrickville", 
+                    "https://no5marrickville.com", 
+                    "Marrickville")
                 inserted = 0
                 for entry in out:
                     gid = upsert_girl(cur, entry, shop_id)
