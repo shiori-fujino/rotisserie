@@ -10,7 +10,7 @@ export interface RosterItem {
   photo: string;
   photos?: string[];
   views?: number;
-  reviewsCount?: number;
+  commentsCount?: number;
 }
 
 export interface Review {

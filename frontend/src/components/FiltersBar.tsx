@@ -47,9 +47,18 @@ export default function FiltersBar({ value, onChange, shops = [], origins = [] }
           MenuProps={menuProps}
         >
           <MenuItem value="">All Nationalities</MenuItem>
-          {origins.map((o) => (
-            <MenuItem key={o} value={o}>{o}</MenuItem>
-          ))}
+          {origins
+            .slice() // copy to avoid mutating
+            .sort((a, b) => {
+              if (a === "Other") return 1;  // push "Other" down
+              if (b === "Other") return -1;
+              return a.localeCompare(b);
+            })
+            .map((o) => (
+              <MenuItem key={o} value={o}>
+                {o}
+              </MenuItem>
+            ))}
         </Select>
       </FormControl>
 

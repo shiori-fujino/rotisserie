@@ -1,31 +1,38 @@
 [
   {
-    "name": "Mika",
+    "name": "Myka",
     "origin_code": "Japanese",
-    "shift": "4pm - close !",
-    "profile_link": "https://www.surryhillsbrothel.com.au/project/mika-japan-2/",
-    "photo": "https://www.surryhillsbrothel.com.au/wp-content/uploads/2025/09/Mika-Jp-01.jpeg"
+    "shift": "12pm - close !",
+    "profile_link": "https://www.surryhillsbrothel.com.au/project/myka-japan-3/",
+    "photo": "https://www.surryhillsbrothel.com.au/wp-content/uploads/2025/09/Myka-Jp-01.jpeg"
   },
   {
-    "name": "Rie",
+    "name": "Honomi",
+    "origin_code": "Japanese",
+    "shift": "10am - 1am !",
+    "profile_link": "https://www.surryhillsbrothel.com.au/project/honomi-japan-2/",
+    "photo": "https://www.surryhillsbrothel.com.au/wp-content/uploads/2025/09/Honomi-Jp-04-scaled.jpeg"
+  },
+  {
+    "name": "Omi",
     "origin_code": "Japanese",
     "shift": "3pm - close !",
-    "profile_link": "https://www.surryhillsbrothel.com.au/project/rie-japan-2/",
-    "photo": "https://www.surryhillsbrothel.com.au/wp-content/uploads/2025/09/Rie-Jp-03.jpeg"
+    "profile_link": "https://www.surryhillsbrothel.com.au/project/omi-japan/",
+    "photo": "https://www.surryhillsbrothel.com.au/wp-content/uploads/2025/09/Omi-Jp-03-scaled.jpeg"
   },
   {
-    "name": "Kaho",
+    "name": "Cocomi",
     "origin_code": "Japanese",
-    "shift": "10am - close !",
-    "profile_link": "https://www.surryhillsbrothel.com.au/project/kaho-japan-2/",
-    "photo": ""
+    "shift": "10am - 1am !",
+    "profile_link": "https://www.surryhillsbrothel.com.au/project/cocomi-japan-2/",
+    "photo": "https://www.surryhillsbrothel.com.au/wp-content/uploads/2025/09/Cocomi-Jp-01.jpeg"
   },
   {
-    "name": "Kiara",
+    "name": "Suka",
     "origin_code": "Japanese",
     "shift": "10am - 2am !",
-    "profile_link": "https://www.surryhillsbrothel.com.au/project/kiara-japan/",
-    "photo": "https://www.surryhillsbrothel.com.au/wp-content/uploads/2024/10/Kiara-Jp-19.jpeg"
+    "profile_link": "https://www.surryhillsbrothel.com.au/project/suka-japan/",
+    "photo": "https://www.surryhillsbrothel.com.au/wp-content/uploads/2025/07/Suka-Jp-01.jpeg"
   },
   {
     "name": "Mimoya",
@@ -35,27 +42,6 @@
     "photo": "https://www.surryhillsbrothel.com.au/wp-content/uploads/2025/07/Mimoya-Jp-05-scaled.jpeg"
   },
   {
-    "name": "Kasuga",
-    "origin_code": "Japanese",
-    "shift": "10am - 2am !",
-    "profile_link": "https://www.surryhillsbrothel.com.au/project/kasuga-japan/",
-    "photo": "https://www.surryhillsbrothel.com.au/wp-content/uploads/2025/09/Kasuga-Jp-04-scaled.jpeg"
-  },
-  {
-    "name": "Linda",
-    "origin_code": "Chinese",
-    "shift": "1pm - 2am !",
-    "profile_link": "https://www.surryhillsbrothel.com.au/project/linda-china-3/",
-    "photo": "https://www.surryhillsbrothel.com.au/wp-content/uploads/2025/08/Linda-Cn-01.jpeg"
-  },
-  {
-    "name": "Kanata",
-    "origin_code": "Japanese",
-    "shift": "10am - close !",
-    "profile_link": "https://www.surryhillsbrothel.com.au/project/kanata-japan/",
-    "photo": ""
-  },
-  {
     "name": "Kumiko",
     "origin_code": "Japanese",
     "shift": "10am - 2am !",
@@ -63,11 +49,25 @@
     "photo": "https://www.surryhillsbrothel.com.au/wp-content/uploads/2024/12/Kumiko-Jp-07.jpeg"
   },
   {
-    "name": "Hatano",
+    "name": "Akker",
+    "origin_code": "Japanese",
+    "shift": "3pm - 9pm !",
+    "profile_link": "https://www.surryhillsbrothel.com.au/project/akker-japan/",
+    "photo": "https://www.surryhillsbrothel.com.au/wp-content/uploads/2022/11/Akker-Jp-10-scaled.jpeg"
+  },
+  {
+    "name": "Kiara",
     "origin_code": "Japanese",
     "shift": "10am - 2am !",
-    "profile_link": "https://www.surryhillsbrothel.com.au/project/hatano-japan/",
-    "photo": "https://www.surryhillsbrothel.com.au/wp-content/uploads/2024/12/Hatano-Jp-08.jpeg"
+    "profile_link": "https://www.surryhillsbrothel.com.au/project/kiara-japan/",
+    "photo": "https://www.surryhillsbrothel.com.au/wp-content/uploads/2024/10/Kiara-Jp-19.jpeg"
+  },
+  {
+    "name": "Ai",
+    "origin_code": "Japanese",
+    "shift": "12pm - 4am !",
+    "profile_link": "https://www.surryhillsbrothel.com.au/project/ai-japan/",
+    "photo": "https://www.surryhillsbrothel.com.au/wp-content/uploads/2024/11/Ai-Jp-07.jpeg"
   },
   {
     "name": "Lori",
@@ -91,32 +91,11 @@
     "photo": "https://www.surryhillsbrothel.com.au/wp-content/uploads/2025/02/Liya-Jp-03-scaled.jpeg"
   },
   {
-    "name": "Amanda",
-    "origin_code": "Singaporean",
-    "shift": "12pm - 9pm",
-    "profile_link": "https://www.surryhillsbrothel.com.au/project/amanda-china/",
-    "photo": "https://www.surryhillsbrothel.com.au/wp-content/uploads/2020/07/Amanda-Sg-09.jpeg"
-  },
-  {
-    "name": "Izumi",
-    "origin_code": "Japanese",
-    "shift": "12pm - 9pm",
-    "profile_link": "https://www.surryhillsbrothel.com.au/project/izumi-japan/",
-    "photo": "https://www.surryhillsbrothel.com.au/wp-content/uploads/2022/08/Izumi-Jp-01-scaled.jpeg"
-  },
-  {
-    "name": "Star",
-    "origin_code": "Singaporean",
-    "shift": "8pm - 12am",
-    "profile_link": "https://www.surryhillsbrothel.com.au/project/star-singapore/",
-    "photo": "https://www.surryhillsbrothel.com.au/wp-content/uploads/2024/01/Star-Sg-01.jpeg"
-  },
-  {
-    "name": "Emily",
-    "origin_code": "Laos",
-    "shift": "9pm - 4am",
-    "profile_link": "https://www.surryhillsbrothel.com.au/project/emily-laos/",
-    "photo": "https://www.surryhillsbrothel.com.au/wp-content/uploads/2025/06/Emily-Laos-02.jpeg"
+    "name": "Jolin",
+    "origin_code": "Vietnamese",
+    "shift": "1pm - 8pm",
+    "profile_link": "https://www.surryhillsbrothel.com.au/project/jolin-vietnam/",
+    "photo": "https://www.surryhillsbrothel.com.au/wp-content/uploads/2025/03/Jolin-Vn-01.jpeg"
   },
   {
     "name": "Diana",

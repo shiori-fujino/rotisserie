@@ -1,27 +1,43 @@
 [
   {
-    "name": "Dani",
+    "name": "Yoi",
+    "origin_code": "Jp",
+    "origin_full": "Japanese",
+    "shift": "2pm - close !",
+    "profile_link": "https://citybrothel.com.au/project/yoi-japan/",
+    "photo": "https://citybrothel.com.au/wp-content/uploads/2025/09/Yoi-Jp-01.jpeg"
+  },
+  {
+    "name": "Aira",
+    "origin_code": "Jp",
+    "origin_full": "Japanese",
+    "shift": "2pm - close !",
+    "profile_link": "https://citybrothel.com.au/project/aira-japan/",
+    "photo": "https://citybrothel.com.au/wp-content/uploads/2025/09/Aira-Jp-02.jpeg"
+  },
+  {
+    "name": "Riei",
+    "origin_code": "Jp",
+    "origin_full": "Japanese",
+    "shift": "2pm - close !",
+    "profile_link": "https://citybrothel.com.au/project/riei-japan/",
+    "photo": "https://citybrothel.com.au/wp-content/uploads/2025/09/Riei-Jp-06-scaled.jpeg"
+  },
+  {
+    "name": "Bella",
     "origin_code": "Cn",
     "origin_full": "Chinese",
-    "shift": "3pm - 2am !",
-    "profile_link": "https://citybrothel.com.au/project/dani-china/",
-    "photo": "https://citybrothel.com.au/wp-content/uploads/2025/09/Dani-Cn-01.jpeg"
+    "shift": "11am - 12am !",
+    "profile_link": "https://citybrothel.com.au/project/bella-china/",
+    "photo": "https://citybrothel.com.au/wp-content/uploads/2025/09/Bella-Cn-01.jpeg"
   },
   {
-    "name": "Riri",
+    "name": "Juri",
     "origin_code": "Jp",
     "origin_full": "Japanese",
-    "shift": "3pm - close !",
-    "profile_link": "https://citybrothel.com.au/project/riri-japan/",
-    "photo": "https://citybrothel.com.au/wp-content/uploads/2025/09/Riri-Jp-01.jpeg"
-  },
-  {
-    "name": "Karen",
-    "origin_code": "Jp",
-    "origin_full": "Japanese",
-    "shift": "3pm - close !",
-    "profile_link": "https://citybrothel.com.au/project/karen-japan/",
-    "photo": "https://citybrothel.com.au/wp-content/uploads/2025/09/Karen-Jp-05-scaled.jpeg"
+    "shift": "10am - 2am !",
+    "profile_link": "https://citybrothel.com.au/project/juri-japan/",
+    "photo": "https://citybrothel.com.au/wp-content/uploads/2025/05/Juri-Jp-01.jpeg"
   },
   {
     "name": "Kiki",
@@ -29,7 +45,7 @@
     "origin_full": "Japanese",
     "shift": "3pm - close !",
     "profile_link": "https://citybrothel.com.au/project/kiki-japan/",
-    "photo": "https://citybrothel.com.au/wp-content/uploads/2025/09/Kiki-Jp-02.jpeg"
+    "photo": "https://citybrothel.com.au/wp-content/uploads/2025/09/Kiki-Jp-03-scaled.jpeg"
   },
   {
     "name": "Ima",
@@ -43,9 +59,49 @@
     "name": "Umi",
     "origin_code": "Jp",
     "origin_full": "Japanese",
-    "shift": "12pm - 2am !",
+    "shift": "10am - 12am !",
     "profile_link": "https://citybrothel.com.au/project/umi-japan/",
     "photo": "https://citybrothel.com.au/wp-content/uploads/2025/08/Umi-Jp-06-scaled.jpeg"
+  },
+  {
+    "name": "Erena",
+    "origin_code": "Jp",
+    "origin_full": "Japanese",
+    "shift": "12pm - 11pm !",
+    "profile_link": "https://citybrothel.com.au/project/erena-japan/",
+    "photo": "https://citybrothel.com.au/wp-content/uploads/2025/07/Erena-Jp-02-scaled.jpeg"
+  },
+  {
+    "name": "Kanon",
+    "origin_code": "Jp",
+    "origin_full": "Japanese",
+    "shift": "12pm - 11pm !",
+    "profile_link": "https://citybrothel.com.au/project/kanon-japan-3/",
+    "photo": "https://citybrothel.com.au/wp-content/uploads/2025/07/Kanon-Jp-03-scaled.jpeg"
+  },
+  {
+    "name": "Dani",
+    "origin_code": "Cn",
+    "origin_full": "Chinese",
+    "shift": "11am - 1am !",
+    "profile_link": "https://citybrothel.com.au/project/dani-china/",
+    "photo": "https://citybrothel.com.au/wp-content/uploads/2025/09/Dani-Cn-01.jpeg"
+  },
+  {
+    "name": "Lily",
+    "origin_code": "Vn",
+    "origin_full": "Vietnamese",
+    "shift": "12pm - 10pm !",
+    "profile_link": "https://citybrothel.com.au/project/lily-vietnam/",
+    "photo": "https://citybrothel.com.au/wp-content/uploads/2025/03/Lily-Vn-05.jpeg"
+  },
+  {
+    "name": "Tomie",
+    "origin_code": "Jp",
+    "origin_full": "Japanese",
+    "shift": "11am - 3am !",
+    "profile_link": "https://citybrothel.com.au/project/tomie-japan/",
+    "photo": "https://citybrothel.com.au/wp-content/uploads/2025/07/Tomie-Jp-03-scaled.jpeg"
   },
   {
     "name": "Moca",
@@ -56,68 +112,52 @@
     "photo": "https://citybrothel.com.au/wp-content/uploads/2025/03/Moca-Jp-05.jpeg"
   },
   {
-    "name": "Meiya",
+    "name": "Tsuki",
     "origin_code": "Jp",
     "origin_full": "Japanese",
-    "shift": "11am - 1am !",
-    "profile_link": "https://citybrothel.com.au/project/meiya-japan/",
-    "photo": "https://citybrothel.com.au/wp-content/uploads/2025/08/Meiya-Jp-05-scaled.jpeg"
-  },
-  {
-    "name": "Saya",
-    "origin_code": "Jp",
-    "origin_full": "Japanese",
-    "shift": "12pm - 1am !",
-    "profile_link": "https://citybrothel.com.au/project/saya-japan/",
-    "photo": "https://citybrothel.com.au/wp-content/uploads/2025/06/Saya-Jp-03-scaled.jpeg"
-  },
-  {
-    "name": "Maki",
-    "origin_code": "Jp",
-    "origin_full": "Japanese",
-    "shift": "10am - 2am !",
-    "profile_link": "https://citybrothel.com.au/project/maki-japan/",
-    "photo": "https://citybrothel.com.au/wp-content/uploads/2025/03/Maki-Jp-07.jpeg"
+    "shift": "3pm - 1am !",
+    "profile_link": "https://citybrothel.com.au/project/tsuki-japan/",
+    "photo": "https://citybrothel.com.au/wp-content/uploads/2025/04/Tsuki-Jp-02-scaled.jpeg"
   },
   {
     "name": "Remi",
     "origin_code": "Jp",
     "origin_full": "Japanese",
-    "shift": "11am - 2am !",
+    "shift": "3pm - 2am !",
     "profile_link": "https://citybrothel.com.au/project/remi-japan-2/",
     "photo": "https://citybrothel.com.au/wp-content/uploads/2025/04/Remi-Jp-04-scaled.jpeg"
   },
   {
-    "name": "Tsuki",
-    "origin_code": "Jp",
-    "origin_full": "Japanese",
-    "shift": "11am - 1am !",
-    "profile_link": "https://citybrothel.com.au/project/tsuki-japan/",
-    "photo": "https://citybrothel.com.au/wp-content/uploads/2025/04/Tsuki-Jp-02-scaled.jpeg"
+    "name": "Kiwi",
+    "origin_code": "Cn",
+    "origin_full": "Chinese",
+    "shift": "10am - 6pm",
+    "profile_link": "https://citybrothel.com.au/project/kiwi-china/",
+    "photo": "https://citybrothel.com.au/wp-content/uploads/2024/03/Kiwi-1-Cn.jpg"
   },
   {
-    "name": "Moe",
-    "origin_code": "Jp",
-    "origin_full": "Japanese",
+    "name": "Ruru",
+    "origin_code": "Vn",
+    "origin_full": "Vietnamese",
     "shift": "10am - 7pm",
-    "profile_link": "https://citybrothel.com.au/project/moe-japan/",
-    "photo": "https://citybrothel.com.au/wp-content/uploads/2024/07/Moe-Jp-01.jpeg"
+    "profile_link": "https://citybrothel.com.au/project/ruru-vietnam/",
+    "photo": "https://citybrothel.com.au/wp-content/uploads/2025/04/Ruru-Vn-01.jpeg"
   },
   {
-    "name": "Mayu",
-    "origin_code": "Jp",
-    "origin_full": "Japanese",
-    "shift": "11am - 2am",
-    "profile_link": "https://citybrothel.com.au/project/mayu-japan-2/",
-    "photo": "https://citybrothel.com.au/wp-content/uploads/2024/11/Mayu-Jp-05-scaled.jpeg"
+    "name": "Skylar",
+    "origin_code": "Cn",
+    "origin_full": "Chinese",
+    "shift": "12pm - 5pm",
+    "profile_link": "https://citybrothel.com.au/project/skylar-china/",
+    "photo": "https://citybrothel.com.au/wp-content/uploads/2019/11/Skylar-Cn-19.jpeg"
   },
   {
-    "name": "Yachi",
+    "name": "Cartier",
     "origin_code": "Th",
     "origin_full": "Thai",
-    "shift": "12pm - 3am",
-    "profile_link": "https://citybrothel.com.au/project/yachi-thailand/",
-    "photo": "https://citybrothel.com.au/wp-content/uploads/2024/05/Yachi-1-Th.jpg"
+    "shift": "2pm - 10pm",
+    "profile_link": "https://citybrothel.com.au/project/cartier-thailand/",
+    "photo": "https://citybrothel.com.au/wp-content/uploads/2024/12/Cartier-Th-01.jpeg"
   },
   {
     "name": "Nana",
@@ -131,16 +171,24 @@
     "name": "Wendy",
     "origin_code": "Cn",
     "origin_full": "Chinese",
-    "shift": "2pm - 2am",
+    "shift": "3pm - 2am",
     "profile_link": "https://citybrothel.com.au/project/wendy-china-2/",
     "photo": "https://citybrothel.com.au/wp-content/uploads/2023/10/Wendy-Cn-02.jpeg"
   },
   {
-    "name": "Yocca",
-    "origin_code": "Jp",
-    "origin_full": "Japanese",
-    "shift": "2pm - 3am",
-    "profile_link": "https://citybrothel.com.au/project/yocca-japan/",
-    "photo": "https://citybrothel.com.au/wp-content/uploads/2025/07/Yocca-Jp-02.jpeg"
+    "name": "Yachi",
+    "origin_code": "Th",
+    "origin_full": "Thai",
+    "shift": "3pm - 3am",
+    "profile_link": "https://citybrothel.com.au/project/yachi-thailand/",
+    "photo": "https://citybrothel.com.au/wp-content/uploads/2024/05/Yachi-1-Th.jpg"
+  },
+  {
+    "name": "Alisa",
+    "origin_code": "Tw",
+    "origin_full": "Taiwanese",
+    "shift": "7pm - 2am",
+    "profile_link": "https://citybrothel.com.au/project/alisa-taiwan/",
+    "photo": "https://citybrothel.com.au/wp-content/uploads/2023/08/Alisa-Tw-03-1.jpeg"
   }
 ]

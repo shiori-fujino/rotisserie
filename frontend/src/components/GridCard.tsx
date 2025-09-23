@@ -35,7 +35,7 @@ export default function GridCard({ item, onSelect }: {
           </Box>
           <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
             <RateReviewIcon fontSize="small" />
-            <Typography variant="caption">{item.reviewsCount ?? 0}</Typography>
+            <Typography variant="caption">{item.commentsCount ?? 0}</Typography>
           </Box>
         </Stack>
       </CardContent>

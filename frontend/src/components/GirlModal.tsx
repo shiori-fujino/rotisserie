@@ -1,3 +1,4 @@
+// src/components/GirlModal.tsx
 import { useEffect, useState } from "react";
 import axios from "axios";
 import {
@@ -12,14 +13,15 @@ interface GirlModalProps {
   girlName: string;
   profileUrl: string;
   onViewsUpdated?: () => void;
-  onReviewsUpdated?: () => void;
+  onCommentsUpdated?: () => void;
 }
 
-interface Review {
+interface Comment {
   id: number;
-  rating: number;
-  comment: string;
+  rating: number | null;
+  comment: string | null;
   created_at: string;
+  parent_id: number | null;
 }
 
 export default function GirlModal({
@@ -29,21 +31,23 @@ export default function GirlModal({
   girlName,
   profileUrl,
   onViewsUpdated,
-  onReviewsUpdated,
+  onCommentsUpdated,
 }: GirlModalProps) {
-  const [reviews, setReviews] = useState<Review[]>([]);
+  const [comments, setComments] = useState<Comment[]>([]);
   const [rating, setRating] = useState<number | null>(0);
   const [comment, setComment] = useState("");
 
-  // 🔔 snackbar state
+  const [replyTo, setReplyTo] = useState<number | null>(null);
+  const [replyText, setReplyText] = useState("");
+
   const [snackbarOpen, setSnackbarOpen] = useState(false);
 
-  // 🔥 load existing reviews
+  // 🔥 load existing comments
   useEffect(() => {
     if (open && girlId) {
-      axios.get(`http://localhost:4000/api/reviews/${girlId}`)
-        .then((res) => setReviews(res.data))
-        .catch((err) => console.error("fetch reviews error", err));
+      axios.get(`http://localhost:4000/api/comments/${girlId}`)
+        .then((res) => setComments(res.data))
+        .catch((err) => console.error("fetch comments error", err));
     }
   }, [open, girlId]);
 
@@ -58,28 +62,52 @@ export default function GirlModal({
     }
   }, [open, girlId]);
 
-  const handleSubmitReview = async () => {
+  // 🔥 submit new top-level comment
+  const handleSubmitComment = async () => {
     try {
-      await axios.post(`http://localhost:4000/api/reviews/${girlId}`, {
+      await axios.post(`http://localhost:4000/api/comments/${girlId}`, {
         rating,
         comment,
       });
       setComment("");
       setRating(0);
 
-      // reload modal reviews list
-      const res = await axios.get(`http://localhost:4000/api/reviews/${girlId}`);
-      setReviews(res.data);
+      const res = await axios.get(`http://localhost:4000/api/comments/${girlId}`);
+      setComments(res.data);
 
-      // ✅ instantly bump grid count
-      if (onReviewsUpdated) onReviewsUpdated();
-
-      // 🔔 show success toast
+      if (onCommentsUpdated) onCommentsUpdated();
       setSnackbarOpen(true);
     } catch (err) {
-      console.error("add review error", err);
+      console.error("add comment error", err);
     }
   };
+
+  // 🔥 submit reply
+  const handleSubmitReply = async (parentId: number) => {
+    try {
+      await axios.post(`http://localhost:4000/api/comments/${girlId}`, {
+        comment: replyText,
+        parent_id: parentId,
+      });
+      setReplyText("");
+      setReplyTo(null);
+
+      const res = await axios.get(`http://localhost:4000/api/comments/${girlId}`);
+      setComments(res.data);
+    } catch (err) {
+      console.error("add reply error", err);
+    }
+  };
+
+  // 🔥 group comments
+  const topLevel = comments.filter(c => !c.parent_id);
+  const repliesMap = comments.reduce((acc, c) => {
+    if (c.parent_id) {
+      if (!acc[c.parent_id]) acc[c.parent_id] = [];
+      acc[c.parent_id].push(c);
+    }
+    return acc;
+  }, {} as Record<number, Comment[]>);
 
   if (!open) return null;
 
@@ -96,38 +124,74 @@ export default function GirlModal({
         </DialogTitle>
 
         <DialogContent dividers>
-          {/* Reviews */}
+          {/* Comments */}
           <Box sx={{ mb: 2 }}>
-            <Typography variant="subtitle1">Reviews</Typography>
-            {reviews.length === 0 ? (
+            <Typography variant="subtitle1">Comments</Typography>
+            {topLevel.length === 0 ? (
               <Typography variant="body2" color="text.secondary">
-                No reviews yet.
+                No comments yet.
               </Typography>
             ) : (
               <Stack spacing={2} sx={{ mt: 1 }}>
-                {reviews.map((r) => (
-                  <Box key={r.id}>
-                    <Rating value={r.rating} readOnly size="small" />
-                    <Typography variant="body2">{r.comment}</Typography>
+                {topLevel.map((c) => (
+                  <Box key={c.id} sx={{ mb: 1 }}>
+                    {c.rating && <Rating value={c.rating} readOnly size="small" />}
+                    <Typography variant="body2">{c.comment}</Typography>
                     <Typography variant="caption" color="text.secondary">
-                      {new Date(r.created_at).toLocaleString()}
+                      {new Date(c.created_at).toLocaleString()}
                     </Typography>
+
+                    <Button size="small" onClick={() => setReplyTo(c.id)}>
+                      Reply
+                    </Button>
+
+                    {/* Replies */}
+                    {repliesMap[c.id]?.map((reply) => (
+                      <Box key={reply.id} sx={{ ml: 4, mt: 1, p: 1, bgcolor: "#f9f9f9", borderRadius: 1 }}>
+                        <Typography variant="body2">{reply.comment}</Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {new Date(reply.created_at).toLocaleString()}
+                        </Typography>
+                      </Box>
+                    ))}
+
+                    {/* Reply input */}
+                    {replyTo === c.id && (
+                      <Stack spacing={1} sx={{ mt: 1, ml: 4 }}>
+                        <TextField
+                          label="Write a reply"
+                          multiline
+                          rows={2}
+                          value={replyText}
+                          onChange={(e) => setReplyText(e.target.value)}
+                          fullWidth
+                        />
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          onClick={() => handleSubmitReply(c.id)}
+                          disabled={!replyText.trim()}
+                        >
+                          Post Reply
+                        </Button>
+                      </Stack>
+                    )}
                   </Box>
                 ))}
               </Stack>
             )}
           </Box>
 
-          {/* Add new review */}
+          {/* Add new comment */}
           <Box>
-            <Typography variant="subtitle1">Leave a Review</Typography>
+            <Typography variant="subtitle1">Leave a Comment</Typography>
             <Stack spacing={2} sx={{ mt: 1 }}>
               <Rating
                 value={rating}
                 onChange={(_, val) => setRating(val)}
               />
               <TextField
-                label="Your review"
+                label="Your comment"
                 multiline
                 rows={3}
                 value={comment}
@@ -136,8 +200,8 @@ export default function GirlModal({
               />
               <Button
                 variant="contained"
-                onClick={handleSubmitReview}
-                disabled={!rating || !comment.trim()}
+                onClick={handleSubmitComment}
+                disabled={!rating && !comment.trim()}
               >
                 Submit
               </Button>
@@ -158,7 +222,7 @@ export default function GirlModal({
         anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       >
         <Alert severity="success" onClose={() => setSnackbarOpen(false)}>
-          Review submitted!
+          Comment submitted!
         </Alert>
       </Snackbar>
     </>
