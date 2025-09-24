@@ -1,6 +1,17 @@
 [
   {
     "shop": "42 Gladesville",
+    "name": "Lily",
+    "origin_code": "C",
+    "shift": "10 am - 6 pm",
+    "profile_link": "https://thenightshade.com.au/profile/lily/",
+    "photo": "https://thenightshade.com.au/media/uploads/Chinese_Lily_1.jpg",
+    "photos": [
+      "https://thenightshade.com.au/media/uploads/Chinese_Lily_1.jpg"
+    ]
+  },
+  {
+    "shop": "42 Gladesville",
     "name": "Olivia",
     "origin_code": "C",
     "shift": "10 am - 7 pm",
@@ -12,13 +23,13 @@
   },
   {
     "shop": "42 Gladesville",
-    "name": "Lily",
-    "origin_code": "C",
-    "shift": "10 am - 6 pm",
-    "profile_link": "https://thenightshade.com.au/profile/lily/",
-    "photo": "https://thenightshade.com.au/media/uploads/Chinese_Lily_1.jpg",
+    "name": "Patty",
+    "origin_code": "T",
+    "shift": "11 am - 5 pm",
+    "profile_link": "https://thenightshade.com.au/profile/patty/",
+    "photo": "https://thenightshade.com.au/media/uploads/T_Patty_1.png",
     "photos": [
-      "https://thenightshade.com.au/media/uploads/Chinese_Lily_1.jpg"
+      "https://thenightshade.com.au/media/uploads/T_Patty_1.png"
     ]
   },
   {
@@ -34,25 +45,37 @@
   },
   {
     "shop": "42 Gladesville",
-    "name": "Lux",
+    "name": "Baby",
     "origin_code": "C",
-    "shift": "11 am - 4 pm",
-    "profile_link": "https://thenightshade.com.au/profile/lux-1/",
-    "photo": "https://thenightshade.com.au/media/uploads/C_Lux_1.png",
+    "shift": "12 pm - 1 am",
+    "profile_link": "https://thenightshade.com.au/profile/baby-1/",
+    "photo": "https://thenightshade.com.au/media/uploads/C_Baby_5.png",
     "photos": [
-      "https://thenightshade.com.au/media/uploads/C_Lux_1.png"
+      "https://thenightshade.com.au/media/uploads/C_Baby_5.png"
     ]
   },
   {
     "shop": "42 Gladesville",
-    "name": "Monica",
+    "name": "Jay",
     "origin_code": "C",
-    "shift": "12 pm - 8 pm",
-    "profile_link": "https://thenightshade.com.au/profile/monica-1/",
-    "photo": "https://thenightshade.com.au/media/uploads/C_Monica_1.png",
+    "shift": "12 pm - 10 pm",
+    "profile_link": "https://thenightshade.com.au/profile/jay/",
+    "photo": "https://thenightshade.com.au/media/uploads/C_Jay_11.png",
     "photos": [
-      "https://thenightshade.com.au/media/uploads/C_Monica_1.png",
-      "https://thenightshade.com.au/media/uploads/C_Monica_11.png"
+      "https://thenightshade.com.au/media/uploads/C_Jay_11.png",
+      "https://thenightshade.com.au/media/uploads/C_Jay_12.png"
+    ]
+  },
+  {
+    "shop": "42 Gladesville",
+    "name": "Demi",
+    "origin_code": "Au",
+    "shift": "12 pm - 7 pm",
+    "profile_link": "https://thenightshade.com.au/profile/demi/",
+    "photo": "https://thenightshade.com.au/media/uploads/Au_Demi_1.jpg",
+    "photos": [
+      "https://thenightshade.com.au/media/uploads/Au_Demi_1.jpg",
+      "https://thenightshade.com.au/media/uploads/Au_Demi_2.jpg"
     ]
   },
   {
@@ -83,13 +106,36 @@
   },
   {
     "shop": "42 Gladesville",
-    "name": "Lita",
-    "origin_code": "Tw",
-    "shift": "12 pm - 9 pm",
-    "profile_link": "https://thenightshade.com.au/profile/lita/",
-    "photo": "https://thenightshade.com.au/media/uploads/TW_Lita_3.jpg",
+    "name": "Iris",
+    "origin_code": "C",
+    "shift": "12 pm - 10 pm",
+    "profile_link": "https://thenightshade.com.au/profile/iris/",
+    "photo": "https://thenightshade.com.au/media/uploads/C_Iris_1.png",
     "photos": [
-      "https://thenightshade.com.au/media/uploads/TW_Lita_3.jpg"
+      "https://thenightshade.com.au/media/uploads/C_Iris_1.png"
+    ]
+  },
+  {
+    "shop": "42 Gladesville",
+    "name": "Monica",
+    "origin_code": "C",
+    "shift": "12 pm - 8 pm",
+    "profile_link": "https://thenightshade.com.au/profile/monica-1/",
+    "photo": "https://thenightshade.com.au/media/uploads/C_Monica_1.png",
+    "photos": [
+      "https://thenightshade.com.au/media/uploads/C_Monica_1.png",
+      "https://thenightshade.com.au/media/uploads/C_Monica_11.png"
+    ]
+  },
+  {
+    "shop": "42 Gladesville",
+    "name": "Fiona",
+    "origin_code": "C",
+    "shift": "12 pm - 10 pm",
+    "profile_link": "https://thenightshade.com.au/profile/fiona/",
+    "photo": "https://thenightshade.com.au/media/uploads/C_Fiona_1111.png",
+    "photos": [
+      "https://thenightshade.com.au/media/uploads/C_Fiona_1111.png"
     ]
   },
   {
@@ -103,18 +149,6 @@
       "https://thenightshade.com.au/media/uploads/C_Milk_1.png",
       "https://thenightshade.com.au/media/uploads/C_Milk_2.png",
       "https://thenightshade.com.au/media/uploads/C_MIlk_3.png"
-    ]
-  },
-  {
-    "shop": "42 Gladesville",
-    "name": "Freya",
-    "origin_code": "V",
-    "shift": "12 pm - 11 pm",
-    "profile_link": "https://thenightshade.com.au/profile/freya-1/",
-    "photo": "https://thenightshade.com.au/media/uploads/V_Freya_1.png",
-    "photos": [
-      "https://thenightshade.com.au/media/uploads/V_Freya_1.png",
-      "https://thenightshade.com.au/media/uploads/V_Freya_2.png"
     ]
   },
   {
@@ -133,27 +167,14 @@
   },
   {
     "shop": "42 Gladesville",
-    "name": "Rebecca",
-    "origin_code": "C",
-    "shift": "1 pm - 1 am",
-    "profile_link": "https://thenightshade.com.au/profile/rebecca/",
-    "photo": "https://thenightshade.com.au/media/uploads/C_Rebecca_22.png",
+    "name": "Miku",
+    "origin_code": "J",
+    "shift": "2 pm - 11 pm",
+    "profile_link": "https://thenightshade.com.au/profile/miku/",
+    "photo": "https://thenightshade.com.au/media/uploads/J_Miku_1.jpg",
     "photos": [
-      "https://thenightshade.com.au/media/uploads/C_Rebecca_22.png",
-      "https://thenightshade.com.au/media/uploads/C_Rebecca_55.png",
-      "https://thenightshade.com.au/media/uploads/C_Rebecca_1111.png",
-      "https://thenightshade.com.au/media/uploads/C_rebecca_111111.png"
-    ]
-  },
-  {
-    "shop": "42 Gladesville",
-    "name": "Iris",
-    "origin_code": "C",
-    "shift": "1 pm - 10 pm",
-    "profile_link": "https://thenightshade.com.au/profile/iris/",
-    "photo": "https://thenightshade.com.au/media/uploads/C_Iris_1.png",
-    "photos": [
-      "https://thenightshade.com.au/media/uploads/C_Iris_1.png"
+      "https://thenightshade.com.au/media/uploads/J_Miku_1.jpg",
+      "https://thenightshade.com.au/media/uploads/J_Miku_2.jpg"
     ]
   },
   {
@@ -181,18 +202,6 @@
   },
   {
     "shop": "42 Gladesville",
-    "name": "Leona",
-    "origin_code": "C",
-    "shift": "7 pm - 3 am",
-    "profile_link": "https://thenightshade.com.au/profile/leona/",
-    "photo": "https://thenightshade.com.au/media/uploads/C_Leona_3.png",
-    "photos": [
-      "https://thenightshade.com.au/media/uploads/C_Leona_3.png",
-      "https://thenightshade.com.au/media/uploads/C_Leona_4.png"
-    ]
-  },
-  {
-    "shop": "42 Gladesville",
     "name": "Jolie",
     "origin_code": "V",
     "shift": "7 pm - 3 am",
@@ -202,5 +211,13 @@
       "https://thenightshade.com.au/media/uploads/V_Jolie_4.png",
       "https://thenightshade.com.au/media/uploads/V_Jolie_5.png"
     ]
+  },
+  {
+    "shop": "42 Gladesville",
+    "name": "Blair",
+    "origin_code": "Au",
+    "shift": "8 pm - 12:30 am",
+    "profile_link": "https://thenightshade.com.au/profile/blair/",
+    "photo": "https://thenightshade.com.au/static/n/img/logo.svg"
   }
 ]
