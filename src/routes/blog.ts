@@ -1,9 +1,10 @@
 import { Router } from "express";
 import pool from "../db";
+import { requireAdmin } from "../middleware/auth";
 
 const router = Router();
 
-// GET /api/blog → list posts
+// GET /api/blog → list posts (public)
 router.get("/", async (_req, res) => {
   try {
     const q = `SELECT id, title, content, created_at
@@ -18,15 +19,8 @@ router.get("/", async (_req, res) => {
 });
 
 // POST /api/blog → add post (admin only)
-router.post("/", async (req, res) => {
+router.post("/", requireAdmin, async (req, res) => {
   try {
-    // 🔒 Check admin key
-    const key = req.header("x-admin-key");
-if (!key || key !== process.env.BLOG_ADMIN_KEY) {
-  console.warn(`[BLOG] Unauthorized POST attempt at ${new Date().toISOString()}`);
-  return res.status(403).json({ error: "Forbidden" });
-    }
-
     const { title, content } = req.body || {};
     if (!title || !content) {
       return res.status(400).json({ error: "Missing title or content" });
@@ -42,15 +36,10 @@ if (!key || key !== process.env.BLOG_ADMIN_KEY) {
     res.status(500).json({ error: "Failed to add blog post" });
   }
 });
-// PUT /api/blog/:id → update title/content/date
-router.put("/:id", async (req, res) => {
-  try {
-    const key = req.header("x-admin-key");
-    if (!key || key !== process.env.BLOG_ADMIN_KEY) {
-      console.warn(`[BLOG] Unauthorized PUT attempt at ${new Date().toISOString()}`);
-      return res.status(403).json({ error: "Forbidden" });
-    }
 
+// PUT /api/blog/:id → update post (admin only)
+router.put("/:id", requireAdmin, async (req, res) => {
+  try {
     const { title, content, created_at } = req.body || {};
     if (!title && !content && !created_at) {
       return res.status(400).json({ error: "Nothing to update" });
@@ -64,7 +53,12 @@ router.put("/:id", async (req, res) => {
       WHERE id = $4
       RETURNING id, title, content, created_at
     `;
-    const { rows } = await pool.query(q, [title, content, created_at, req.params.id]);
+    const { rows } = await pool.query(q, [
+      title,
+      content,
+      created_at,
+      req.params.id,
+    ]);
 
     if (rows.length === 0) {
       return res.status(404).json({ error: "Post not found" });
@@ -76,15 +70,10 @@ router.put("/:id", async (req, res) => {
     res.status(500).json({ error: "Failed to update blog post" });
   }
 });
-// DELETE /api/blog/:id → remove post
-router.delete("/:id", async (req, res) => {
-  try {
-    const key = req.header("x-admin-key");
-    if (!key || key !== process.env.BLOG_ADMIN_KEY) {
-      console.warn(`[BLOG] Unauthorized DELETE attempt at ${new Date().toISOString()}`);
-      return res.status(403).json({ error: "Forbidden" });
-    }
 
+// DELETE /api/blog/:id → remove post (admin only)
+router.delete("/:id", requireAdmin, async (req, res) => {
+  try {
     const q = `DELETE FROM blog_posts WHERE id = $1 RETURNING *`;
     const { rows } = await pool.query(q, [req.params.id]);
 
