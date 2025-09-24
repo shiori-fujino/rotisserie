@@ -1,5 +1,5 @@
 import { Box, FormControl, InputLabel, Select, MenuItem } from "@mui/material";
-import type { Filters } from "./FiltersBar.types";
+import type { Filters } from "./FiltersBar.types.ts";
 
 interface Props {
   value: Filters;
@@ -77,20 +77,4 @@ export default function FiltersBar({ value, onChange, shops = [], origins = [] }
     </Box>
   );
 }
-/**
- * 📝 MUI <Select> Cheat Sheet (for my sanity):
- *
- * 1. If "empty" is a REAL option (like "All Shops"):
- *    - Keep <InputLabel>
- *    - Add <MenuItem value="">All Shops</MenuItem>
- *    - Default state = "" (so it shows that option)
- *
- * 2. If "empty" is just a PLACEHOLDER (like "Views"):
- *    - Keep <InputLabel>
- *    - DO NOT add <MenuItem value="">
- *    - Default state = "" (so label shows inside until a real value is picked)
- *
- * ✅ Rule of thumb:
- *    - Empty MenuItem = user can pick it as an option
- *    - No empty MenuItem = label is only a placeholder
- */
+export type { Filters };

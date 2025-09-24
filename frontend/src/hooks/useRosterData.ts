@@ -29,6 +29,7 @@ export default function useRosterData() {
               photo: g.photoUrl,
               views: g.views,
               reviewsCount: g.reviewsCount,
+              commentsCount: g.commentsCount,
             });
           }
         }

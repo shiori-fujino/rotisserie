@@ -1,32 +1,16 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
-import {
-  TextField,
-  Button,
-  Box,
-  Typography,
-  Snackbar,
-  Alert,
-  Grid,
-  IconButton,
-  Tooltip,
-  Switch,
-  FormControlLabel,
-} from "@mui/material";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
-import ContentCopyIcon from "@mui/icons-material/ContentCopy";
-import DeleteSweepIcon from "@mui/icons-material/DeleteSweep";
-import "highlight.js/styles/github-dark.css"; // pick your fav theme
+import "highlight.js/styles/github-dark.css"; // code theme
 
 const STORAGE_KEY = "blog-draft";
 
 export default function NewPostPage() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState(""); // markdown
-  const [success, setSuccess] = useState(false);
-  const [error, setError] = useState("");
+  const [message, setMessage] = useState(""); // success/error
   const [showPreview, setShowPreview] = useState(true);
 
   // Load draft from localStorage
@@ -39,7 +23,7 @@ export default function NewPostPage() {
     }
   }, []);
 
-  // Autosave to localStorage
+  // Autosave
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ title, content }));
   }, [title, content]);
@@ -49,27 +33,23 @@ export default function NewPostPage() {
       await axios.post(
         "/api/blog",
         { title, content },
-        {
-          headers: { "x-admin-key": import.meta.env.VITE_BLOG_ADMIN_KEY },
-        }
+        { headers: { "x-admin-key": import.meta.env.VITE_BLOG_ADMIN_KEY } }
       );
-
-      setSuccess(true);
+      setMessage("✅ Post published!");
       setTitle("");
       setContent("");
       localStorage.removeItem(STORAGE_KEY);
-    } catch (err: any) {
-      console.error(err);
-      setError("Failed to save post");
+    } catch {
+      setMessage("❌ Failed to save post");
     }
   };
 
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(content);
-      setSuccess(true);
+      setMessage("✅ Markdown copied");
     } catch {
-      setError("Copy failed");
+      setMessage("❌ Copy failed");
     }
   };
 
@@ -77,143 +57,115 @@ export default function NewPostPage() {
     setTitle("");
     setContent("");
     localStorage.removeItem(STORAGE_KEY);
+    setMessage("⚠️ Draft cleared");
   };
 
   const wordCount = content.trim().split(/\s+/).filter(Boolean).length;
   const charCount = content.length;
 
   return (
-    <Box sx={{ maxWidth: 1100, mx: "auto", mt: 4 }}>
-      <Typography variant="h5" gutterBottom>
-        New Blog Post
-      </Typography>
+    <div style={{ maxWidth: "1100px", margin: "40px auto", padding: "0 16px" }}>
+      <h2>New Blog Post</h2>
 
-      <TextField
-        label="Title"
-        fullWidth
-        margin="normal"
+      <input
+        type="text"
+        placeholder="Title"
         value={title}
         onChange={(e) => setTitle(e.target.value)}
+        style={{
+          width: "100%",
+          padding: "8px",
+          fontSize: "16px",
+          marginBottom: "12px",
+        }}
       />
 
-      <FormControlLabel
-        control={
-          <Switch
-            checked={showPreview}
-            onChange={(e) => setShowPreview(e.target.checked)}
-          />
-        }
-        label="Show Preview"
-      />
+      <label style={{ display: "block", marginBottom: "8px" }}>
+        <input
+          type="checkbox"
+          checked={showPreview}
+          onChange={(e) => setShowPreview(e.target.checked)}
+        />{" "}
+        Show Preview
+      </label>
 
-      <Grid container spacing={2}>
+      <div style={{ display: "flex", gap: "16px", flexWrap: "wrap" }}>
         {/* Editor */}
-        <Grid item xs={12} md={showPreview ? 6 : 12}>
-          <TextField
-            label="Content (Markdown)"
-            fullWidth
-            multiline
-            rows={20}
-            margin="normal"
+        <div style={{ flex: showPreview ? "1 1 50%" : "1 1 100%" }}>
+          <textarea
+            placeholder="Content (Markdown)"
             value={content}
             onChange={(e) => setContent(e.target.value)}
+            rows={20}
+            style={{
+              width: "100%",
+              padding: "8px",
+              fontSize: "14px",
+              fontFamily: "monospace",
+            }}
           />
 
-          {/* Counters + tools */}
-          <Box
-            sx={{
+          <div
+            style={{
               display: "flex",
               justifyContent: "space-between",
-              alignItems: "center",
-              mt: 1,
+              marginTop: "8px",
             }}
           >
-            <Typography variant="caption">
+            <span style={{ fontSize: "12px", color: "#666" }}>
               {wordCount} words • {charCount} chars
-            </Typography>
-            <Box>
-              <Tooltip title="Copy Markdown">
-                <IconButton onClick={handleCopy}>
-                  <ContentCopyIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-              <Tooltip title="Reset Draft">
-                <IconButton onClick={handleReset}>
-                  <DeleteSweepIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-            </Box>
-          </Box>
-        </Grid>
+            </span>
+            <span>
+              <button onClick={handleCopy} style={{ marginRight: "8px" }}>
+                Copy
+              </button>
+              <button onClick={handleReset}>Reset</button>
+            </span>
+          </div>
+        </div>
 
         {/* Preview */}
         {showPreview && (
-          <Grid
-            item
-            xs={12}
-            md={6}
-            sx={{
-              mt: 2,
+          <div
+            style={{
+              flex: "1 1 50%",
               border: "1px solid #333",
-              borderRadius: 2,
-              p: 2,
+              borderRadius: "6px",
+              padding: "12px",
               background: "#0d1117",
               color: "#f0f6fc",
               overflowX: "auto",
             }}
           >
-            <Typography variant="subtitle1" gutterBottom>
-              Preview
-            </Typography>
-            <Box
-              sx={{
-                "& img": { maxWidth: "100%", borderRadius: "8px" },
-                "& pre": {
-                  background: "#161b22",
-                  padding: "12px",
-                  borderRadius: "6px",
-                  overflowX: "auto",
-                },
-                "& code": {
-                  fontFamily: "monospace",
-                  fontSize: "0.9em",
-                },
-              }}
+            <h4 style={{ marginTop: 0 }}>Preview</h4>
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              rehypePlugins={[rehypeHighlight]}
             >
-              <ReactMarkdown
-                remarkPlugins={[remarkGfm]}
-                rehypePlugins={[rehypeHighlight]}
-              >
-                {content}
-              </ReactMarkdown>
-            </Box>
-          </Grid>
+              {content}
+            </ReactMarkdown>
+          </div>
         )}
-      </Grid>
+      </div>
 
-      <Button
-        sx={{ mt: 2 }}
-        variant="contained"
-        color="primary"
+      <button
         onClick={handleSubmit}
+        style={{
+          marginTop: "16px",
+          padding: "10px 20px",
+          background: "#0070f3",
+          color: "#fff",
+          border: "none",
+          borderRadius: "4px",
+          cursor: "pointer",
+        }}
       >
         Publish
-      </Button>
+      </button>
 
-      <Snackbar
-        open={success}
-        autoHideDuration={3000}
-        onClose={() => setSuccess(false)}
-      >
-        <Alert severity="success">Done!</Alert>
-      </Snackbar>
-      <Snackbar
-        open={!!error}
-        autoHideDuration={3000}
-        onClose={() => setError("")}
-      >
-        <Alert severity="error">{error}</Alert>
-      </Snackbar>
-    </Box>
+      {message && (
+        <div style={{ marginTop: "12px", fontSize: "14px" }}>{message}</div>
+      )}
+    </div>
   );
 }

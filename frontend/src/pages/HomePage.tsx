@@ -51,15 +51,20 @@ export default function HomePage() {
   );
 
   const origins = useMemo(() => {
-    const uniq = Array.from(
-      new Set(shuffled.map((d) => d.origin).filter(Boolean))
-    );
-    return uniq.sort((a, b) => {
-      if (a === "Others") return 1;
-      if (b === "Others") return -1;
-      return a.localeCompare(b);
-    });
-  }, [shuffled]);
+  const uniq = Array.from(
+    new Set(
+      shuffled
+        .map((d) => d.origin)
+        .filter((o): o is string => Boolean(o)) // ✅ removes undefined
+    )
+  );
+  return uniq.sort((a, b) => {
+    if (a === "Others") return 1;
+    if (b === "Others") return -1;
+    return (a ?? "").localeCompare(b ?? "");
+  });
+}, [shuffled]);
+
 
   const filtered = useMemo(() => {
     let out = shuffled;
