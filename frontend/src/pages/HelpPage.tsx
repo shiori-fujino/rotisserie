@@ -93,11 +93,11 @@ export default function HelpPage() {
         Contact Me
       </Typography>
       <Stack spacing={2}>
-        <Typography variant="body2">Email: support@rotisserie.fake</Typography>
-        <Typography variant="body2">Telegram: @rotisserie_support</Typography>
+        <Typography variant="body2">Email: not official yet</Typography>
+        <Typography variant="body2">Whatsapp: not quite yet</Typography>
 
         <Typography variant="body2" sx={{ mt: 2 }}>
-          Or leave a message here:
+          Or leave a message here(This one is up and working right now.):
         </Typography>
         <TextField
           fullWidth
