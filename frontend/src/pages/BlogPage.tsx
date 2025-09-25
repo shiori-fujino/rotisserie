@@ -25,7 +25,8 @@ export default function BlogPage() {
   const navigate = useNavigate(); // ✅ get navigate hook
 
   useEffect(() => {
-    axios.get("/api/blog").then((res) => setPosts(res.data));
+    const api = import.meta.env.VITE_API_URL || "";
+axios.get(`${api}/api/blog`).then((res) => setPosts(res.data));
   }, []);
 
   const handleClick = (index: number) => {
