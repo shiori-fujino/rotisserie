@@ -17,7 +17,6 @@ style={{
 
       {/* Intro */}
       <Typography variant="body1" paragraph>
-        Hi guys, I’m the founder of The Rotisserie.
         I couldn’t stand the ugly, eye-hurting rosters out there, so I built this
         so you don’t have to.
       </Typography>

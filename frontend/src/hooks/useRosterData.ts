@@ -1,3 +1,5 @@
+//frontend/srv/hooks/useRosterData.ts
+
 import { useEffect, useState } from "react";
 import type { RosterItem } from "../types";
 
@@ -5,6 +7,7 @@ export default function useRosterData() {
   const [data, setData] = useState<RosterItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const API_URL = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
     let ignore = false;
@@ -12,7 +15,7 @@ export default function useRosterData() {
     async function fetchData() {
       try {
         setLoading(true);
-        const res = await fetch("http://localhost:4000/api/roster/today");
+        const res = await fetch(`${API_URL}/api/roster/today`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json = await res.json();
 
