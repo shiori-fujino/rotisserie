@@ -2,9 +2,21 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import {
-  Dialog, DialogTitle, DialogContent, DialogActions,
-  Button, Typography, Link, Box, TextField, Rating, Stack, Snackbar, Alert
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  Typography,
+  Link,
+  Box,
+  TextField,
+  Rating,
+  Stack,
+  Snackbar,
+  Alert,
 } from "@mui/material";
+
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:4000";
 
 interface GirlModalProps {
@@ -35,6 +47,9 @@ export default function GirlModal({
   onCommentsUpdated,
 }: GirlModalProps) {
   const [comments, setComments] = useState<Comment[]>([]);
+  const [views, setViews] = useState(0);
+  const [commentsCount, setCommentsCount] = useState(0);
+
   const [rating, setRating] = useState<number | null>(0);
   const [comment, setComment] = useState("");
 
@@ -43,23 +58,24 @@ export default function GirlModal({
 
   const [snackbarOpen, setSnackbarOpen] = useState(false);
 
-  // 🔥 load existing comments
+  // 🔥 load counts + comments when modal opens
   useEffect(() => {
     if (open && girlId) {
-      axios.get(`${API_BASE}/api/comments/${girlId}`)
-        .then((res) => setComments(res.data))
-        .catch((err) => console.error("fetch comments error", err));
+      axios.get(`${API_BASE}/api/views/${girlId}`).then((res) => setViews(res.data.views));
+      axios.get(`${API_BASE}/api/comments/${girlId}`).then((res) => {
+        setComments(res.data);
+        setCommentsCount(res.data.length);
+      });
     }
   }, [open, girlId]);
 
   // 🔥 increment views once per open
   useEffect(() => {
     if (open && girlId) {
-      axios.post(`${API_BASE}/api/views/${girlId}`)
-        .then(() => {
-          if (onViewsUpdated) onViewsUpdated(girlId); // ✅ pass id
-        })
-        .catch((err) => console.error("Failed to increment views", err));
+      axios.post(`${API_BASE}/api/views/${girlId}`).then((res) => {
+        setViews(res.data.views);
+        if (onViewsUpdated) onViewsUpdated(girlId);
+      });
     }
   }, [open, girlId]);
 
@@ -75,8 +91,9 @@ export default function GirlModal({
 
       const res = await axios.get(`${API_BASE}/api/comments/${girlId}`);
       setComments(res.data);
+      setCommentsCount(res.data.length);
 
-      if (onCommentsUpdated) onCommentsUpdated(girlId); // ✅ pass id
+      if (onCommentsUpdated) onCommentsUpdated(girlId);
       setSnackbarOpen(true);
     } catch (err) {
       console.error("add comment error", err);
@@ -95,15 +112,16 @@ export default function GirlModal({
 
       const res = await axios.get(`${API_BASE}/api/comments/${girlId}`);
       setComments(res.data);
+      setCommentsCount(res.data.length);
 
-      if (onCommentsUpdated) onCommentsUpdated(girlId); // ✅ pass id for replies too
+      if (onCommentsUpdated) onCommentsUpdated(girlId);
     } catch (err) {
       console.error("add reply error", err);
     }
   };
 
   // 🔥 group comments
-  const topLevel = comments.filter(c => !c.parent_id);
+  const topLevel = comments.filter((c) => !c.parent_id);
   const repliesMap = comments.reduce((acc, c) => {
     if (c.parent_id) {
       if (!acc[c.parent_id]) acc[c.parent_id] = [];
@@ -120,6 +138,10 @@ export default function GirlModal({
         <DialogTitle>
           <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <Typography variant="h6">{girlName || "Unknown"}</Typography>
+            <Box sx={{ display: "flex", gap: 2 }}>
+              <Typography variant="caption">👀 {views}</Typography>
+              <Typography variant="caption">💬 {commentsCount}</Typography>
+            </Box>
             <Link href={profileUrl} target="_blank" rel="noreferrer">
               Visit Profile
             </Link>
@@ -150,7 +172,10 @@ export default function GirlModal({
 
                     {/* Replies */}
                     {repliesMap[c.id]?.map((reply) => (
-                      <Box key={reply.id} sx={{ ml: 4, mt: 1, p: 1, bgcolor: "#f9f9f9", borderRadius: 1 }}>
+                      <Box
+                        key={reply.id}
+                        sx={{ ml: 4, mt: 1, p: 1, bgcolor: "#f9f9f9", borderRadius: 1 }}
+                      >
                         <Typography variant="body2">{reply.comment}</Typography>
                         <Typography variant="caption" color="text.secondary">
                           {new Date(reply.created_at).toLocaleString()}
@@ -189,10 +214,7 @@ export default function GirlModal({
           <Box>
             <Typography variant="subtitle1">Leave a Comment</Typography>
             <Stack spacing={2} sx={{ mt: 1 }}>
-              <Rating
-                value={rating}
-                onChange={(_, val) => setRating(val)}
-              />
+              <Rating value={rating} onChange={(_, val) => setRating(val)} />
               <TextField
                 label="Your comment"
                 multiline

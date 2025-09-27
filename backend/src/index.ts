@@ -12,12 +12,13 @@ import rosterRoutes from "./routes/roster";
 import shopsRoutes from "./routes/shops";
 import statsRoutes from "./routes/stats";
 import visitsRoutes from "./routes/visits";
-
+import viewsRoutes from "./routes/views"
 const app = express();
 app.use(cors({ origin: true }));
 app.use(express.json());
 
 // mount
+app.use("api/views", viewsRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/blog", blogRoutes);
 app.use("/api/comments", commentsRoutes);
