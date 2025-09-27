@@ -5,6 +5,7 @@ import {
   Dialog, DialogTitle, DialogContent, DialogActions,
   Button, Typography, Link, Box, TextField, Rating, Stack, Snackbar, Alert
 } from "@mui/material";
+const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:4000";
 
 interface GirlModalProps {
   open: boolean;
@@ -12,8 +13,8 @@ interface GirlModalProps {
   girlId: number;
   girlName: string;
   profileUrl: string;
-  onViewsUpdated?: () => void;
-  onCommentsUpdated?: () => void;
+  onViewsUpdated?: (girlId: number) => void;
+  onCommentsUpdated?: (girlId: number) => void;
 }
 
 interface Comment {
@@ -45,7 +46,7 @@ export default function GirlModal({
   // 🔥 load existing comments
   useEffect(() => {
     if (open && girlId) {
-      axios.get(`http://localhost:4000/api/comments/${girlId}`)
+      axios.get(`${API_BASE}/api/comments/${girlId}`)
         .then((res) => setComments(res.data))
         .catch((err) => console.error("fetch comments error", err));
     }
@@ -54,9 +55,9 @@ export default function GirlModal({
   // 🔥 increment views once per open
   useEffect(() => {
     if (open && girlId) {
-      axios.post(`http://localhost:4000/api/views/${girlId}`)
+      axios.post(`${API_BASE}/api/views/${girlId}`)
         .then(() => {
-          if (onViewsUpdated) onViewsUpdated();
+          if (onViewsUpdated) onViewsUpdated(girlId); // ✅ pass id
         })
         .catch((err) => console.error("Failed to increment views", err));
     }
@@ -65,17 +66,17 @@ export default function GirlModal({
   // 🔥 submit new top-level comment
   const handleSubmitComment = async () => {
     try {
-      await axios.post(`http://localhost:4000/api/comments/${girlId}`, {
+      await axios.post(`${API_BASE}/api/comments/${girlId}`, {
         rating,
         comment,
       });
       setComment("");
       setRating(0);
 
-      const res = await axios.get(`http://localhost:4000/api/comments/${girlId}`);
+      const res = await axios.get(`${API_BASE}/api/comments/${girlId}`);
       setComments(res.data);
 
-      if (onCommentsUpdated) onCommentsUpdated();
+      if (onCommentsUpdated) onCommentsUpdated(girlId); // ✅ pass id
       setSnackbarOpen(true);
     } catch (err) {
       console.error("add comment error", err);
@@ -85,15 +86,17 @@ export default function GirlModal({
   // 🔥 submit reply
   const handleSubmitReply = async (parentId: number) => {
     try {
-      await axios.post(`http://localhost:4000/api/comments/${girlId}`, {
+      await axios.post(`${API_BASE}/api/comments/${girlId}`, {
         comment: replyText,
         parent_id: parentId,
       });
       setReplyText("");
       setReplyTo(null);
 
-      const res = await axios.get(`http://localhost:4000/api/comments/${girlId}`);
+      const res = await axios.get(`${API_BASE}/api/comments/${girlId}`);
       setComments(res.data);
+
+      if (onCommentsUpdated) onCommentsUpdated(girlId); // ✅ pass id for replies too
     } catch (err) {
       console.error("add reply error", err);
     }

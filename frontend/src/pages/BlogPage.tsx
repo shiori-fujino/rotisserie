@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom"; // ✅ import navigate
+// src/pages/BlogPage.tsx
 import { useState, useEffect } from "react";
 import axios from "axios";
 import {
@@ -22,11 +22,9 @@ export default function BlogPage() {
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
-  const navigate = useNavigate(); // ✅ get navigate hook
-
   useEffect(() => {
     const api = import.meta.env.VITE_API_URL || "";
-axios.get(`${api}/api/blog`).then((res) => setPosts(res.data));
+    axios.get(`${api}/api/blog`).then((res) => setPosts(res.data));
   }, []);
 
   const handleClick = (index: number) => {
@@ -48,20 +46,6 @@ axios.get(`${api}/api/blog`).then((res) => setPosts(res.data));
   const handleNext = () => {
     if (activeIndex !== null && activeIndex < posts.length - 1) {
       setActiveIndex(activeIndex + 1);
-    }
-  };
-
-  const handleDelete = async (id: number) => {
-    if (!confirm("Delete this post?")) return;
-    try {
-      await axios.delete(`/api/blog/${id}`, {
-        headers: { "x-admin-key": import.meta.env.VITE_BLOG_ADMIN_KEY },
-      });
-      setPosts(posts.filter((p) => p.id !== id));
-      setOpen(false);
-    } catch (err) {
-      console.error(err);
-      alert("Failed to delete post");
     }
   };
 
@@ -97,7 +81,11 @@ axios.get(`${api}/api/blog`).then((res) => setPosts(res.data));
         maxWidth="md"
         fullWidth
         scroll="paper"
-        sx={{ "& .MuiDialog-paper": { fontFamily: "Inter, Roboto, Helvetica, Arial, sans-serif" } }}
+        sx={{
+          "& .MuiDialog-paper": {
+            fontFamily: "Inter, Roboto, Helvetica, Arial, sans-serif",
+          },
+        }}
       >
         {activePost && (
           <>
@@ -144,24 +132,11 @@ axios.get(`${api}/api/blog`).then((res) => setPosts(res.data));
               <Button onClick={handlePrev} disabled={activeIndex === 0}>
                 Previous
               </Button>
-              <Button onClick={handleNext} disabled={activeIndex === posts.length - 1}>
+              <Button
+                onClick={handleNext}
+                disabled={activeIndex === posts.length - 1}
+              >
                 Next
-              </Button>
-              <Button
-                onClick={() => {
-                  if (activePost) {
-                    setOpen(false);
-                    navigate(`/blog/edit/${activePost.id}`); // ✅ go to edit page
-                  }
-                }}
-              >
-                Edit
-              </Button>
-              <Button
-                color="error"
-                onClick={() => activePost && handleDelete(activePost.id)}
-              >
-                Delete
               </Button>
               <Button onClick={handleClose}>Close</Button>
             </DialogActions>

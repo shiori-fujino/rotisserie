@@ -1,6 +1,7 @@
 // src/pages/CommentsPage.tsx
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { API_BASE } from "../config";
 import {
   Container,
   Typography,
@@ -35,7 +36,7 @@ export default function CommentsPage() {
 
   const loadComments = async (reset = false) => {
     try {
-      const res = await axios.get("http://localhost:4000/api/comments", {
+      const res = await axios.get(`${API_BASE}/api/comments`, {
         params: { limit: LIMIT, offset: reset ? 0 : offset },
       });
       const newComments = res.data;

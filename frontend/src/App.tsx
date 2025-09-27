@@ -8,6 +8,7 @@ import Layout from "./components/Layout";
 import AboutPage from "./pages/AboutPage";
 import NotFoundPage from "./pages/NotFoundPage";
 import AdminPage from "./pages/AdminPage";
+import DataPage from "./pages/DataPage";
 
 export default function App() {
   return (
@@ -19,6 +20,8 @@ export default function App() {
       <Route path="/about" element={<Layout><AboutPage /></Layout>} />
       <Route path="/blog" element={<Layout><BlogPage /></Layout>} />
       <Route path="/admin" element={<Layout><AdminPage /></Layout>} />
+      <Route path="/data" element={<Layout><DataPage /></Layout>} />
+
     </Routes>
   );
 }

@@ -1,3 +1,6 @@
+// frontend/src/components/FiltersBar.types.ts
+// 
+
 export interface Filters {
   shop: string;
   origin: string;

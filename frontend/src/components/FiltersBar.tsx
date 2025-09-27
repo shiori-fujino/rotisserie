@@ -1,3 +1,5 @@
+//frontend/src/components/FiltersBar.tsx// 
+
 import { Box, FormControl, InputLabel, Select, MenuItem } from "@mui/material";
 import type { Filters } from "./FiltersBar.types.ts";
 
