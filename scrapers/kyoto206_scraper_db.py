@@ -6,8 +6,7 @@ from typing import Tuple
 
 from db_utils import (
     get_conn, ensure_schema,
-    get_or_create_shop, upsert_girl,
-    upsert_roster_entry,  # photos optional; keeping single cover here
+    get_or_create_shop, upsert_girl, upsert_roster_entry
 )
 
 BASE_URL   = "https://citybrothel.com.au"          # Kyoto 206 lives on this domain
@@ -22,7 +21,7 @@ HEADERS = {
 REQUEST_TIMEOUT = 20
 PAUSE_BETWEEN_PROFILE_REQUESTS = 0.5
 
-# --- origin normalization (your mapping) ---
+# --- origin normalization ---
 _ORIGIN_ALIASES = {
     "jp": ("Jp", "Japanese"), "jpn": ("Jp", "Japanese"),
     "kr": ("Kr", "Korean"),
@@ -81,17 +80,12 @@ def fetch(url: str):
     return requests.get(url, headers=HEADERS, timeout=REQUEST_TIMEOUT, allow_redirects=True)
 
 def find_today_pane(soup: BeautifulSoup):
-    # active tab-pane within any .tab-content
     pane = soup.select_one(".tab-content .tab-pane.in.active, .tab-content .tab-pane.show.active, .tab-content .tab-pane.active")
-    if pane:
-        return pane
-    # active tab via header
+    if pane: return pane
     a = soup.select_one(".wpsm_nav-tabs li.active a, ul[role='tablist'] li.active a")
     if a and a.has_attr("href"):
         pane = soup.select_one(a["href"])
-        if pane:
-            return pane
-    # fallback: first pane
+        if pane: return pane
     return soup.select_one(".tab-content .tab-pane") or soup
 
 def best_img_url(img_tag):
@@ -141,8 +135,8 @@ def scrape():
         name, origin_code, origin_full, shift = parse_li_text(text)
         roster.append({
             "name": name,
-            "origin_code": origin_code,    # DB stores the code in girls.origin
-            "origin_full": origin_full,    # not stored (for debug)
+            "origin_code": origin_code,
+            "origin_full": origin_full,   # debug only
             "shift": shift,
             "profile_link": link,
             "photo": ""
@@ -150,7 +144,7 @@ def scrape():
 
     print(f"Total TODAY entries: {len(roster)}")
 
-    # Grab a cover photo from each profile
+    # Grab one cover photo per profile
     for i, girl in enumerate(roster, start=1):
         link = girl["profile_link"]
         print(f"[{i}/{len(roster)}] Fetching profile: {girl['name']} → {link}")
@@ -181,7 +175,6 @@ def scrape():
 
         time.sleep(PAUSE_BETWEEN_PROFILE_REQUESTS)
 
-    # Keep JSON snapshot for debugging
     with open("kyoto206.json", "w", encoding="utf-8") as f:
         json.dump(roster, f, indent=2, ensure_ascii=False)
     print(f"\nScraped {len(roster)} TODAY profiles → saved to kyoto206.json")
@@ -197,15 +190,14 @@ def main():
                 ensure_schema(cur)
                 shop_id = get_or_create_shop(cur,
                     name="Kyoto 206",
-                    url=BASE_URL,
-                    location="Sydney"
+                    url=BASE_URL
                 )
                 inserted = 0
                 for entry in out:
                     gid = upsert_girl(cur, entry, shop_id)
                     if not gid:
                         continue
-                    upsert_roster_entry(cur, entry, shop_id, gid)  # writes today's shift (may be blank)
+                    upsert_roster_entry(cur, entry, shop_id, gid)
                     inserted += 1
                 print(f"\nSaved {inserted} entries into DB ✅")
     finally:

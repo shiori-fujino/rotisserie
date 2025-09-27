@@ -201,7 +201,6 @@ def main():
                 shop_id = get_or_create_shop(cur,
                     name="Sakura 57",
                     url=BASE_URL,
-                    location="Surry Hills"
                 )
                 inserted = 0
                 for entry in out:

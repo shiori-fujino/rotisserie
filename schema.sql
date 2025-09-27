@@ -34,10 +34,11 @@ CREATE TABLE IF NOT EXISTS girl_views (
   count INT NOT NULL DEFAULT 0
 );
 
--- 💬 Comments / reviews
+-- 💬 Comments / reviews (with one-level reply support)
 CREATE TABLE IF NOT EXISTS girl_comments (
   id SERIAL PRIMARY KEY,
   girl_id INT REFERENCES girls(id) ON DELETE CASCADE,
+  parent_id INT REFERENCES girl_comments(id) ON DELETE CASCADE, -- ✅ self-reference for replies
   rating INT CHECK (rating >= 1 AND rating <= 5),
   comment TEXT,
   created_at TIMESTAMP DEFAULT NOW()
@@ -56,4 +57,10 @@ CREATE TABLE IF NOT EXISTS blog_posts (
   title TEXT NOT NULL,
   content TEXT NOT NULL,
   created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- 📊 DATA page (site visits)
+CREATE TABLE IF NOT EXISTS site_visits (
+  date DATE PRIMARY KEY,
+  count INT NOT NULL DEFAULT 1
 );

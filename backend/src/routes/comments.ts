@@ -1,9 +1,12 @@
+// src/routes/comments.ts
 import { Router } from "express";
-import pool from "../db"; // adjust path if your db connection is elsewhere
+import pool from "../db";
 
 const router = Router();
 
-// GET comments for a girl
+/* -------------------------------------------------------------------------- */
+/* GET comments for a girl (with replies)                                     */
+/* -------------------------------------------------------------------------- */
 router.get("/:girlId", async (req, res) => {
   try {
     const { girlId } = req.params;
@@ -21,9 +24,9 @@ router.get("/:girlId", async (req, res) => {
   }
 });
 
-
-// POST new comment
-// POST new comment or reply
+/* -------------------------------------------------------------------------- */
+/* POST new comment or reply                                                  */
+/* -------------------------------------------------------------------------- */
 router.post("/:girlId", async (req, res) => {
   try {
     const { girlId } = req.params;
@@ -32,7 +35,7 @@ router.post("/:girlId", async (req, res) => {
     const result = await pool.query(
       `INSERT INTO girl_comments (girl_id, rating, comment, parent_id)
        VALUES ($1, $2, $3, $4)
-       RETURNING *`,
+       RETURNING id, girl_id, rating, comment, parent_id, created_at`,
       [girlId, rating || null, comment || null, parent_id || null]
     );
 
@@ -43,12 +46,14 @@ router.post("/:girlId", async (req, res) => {
   }
 });
 
-// GET all comments (newest first, with girl info)
+/* -------------------------------------------------------------------------- */
+/* GET all comments (for feed/admin page)                                     */
+/* -------------------------------------------------------------------------- */
 router.get("/", async (_req, res) => {
   try {
     const result = await pool.query(`
       SELECT c.id, c.girl_id, g.name AS girl_name, g.profile_url, g.photo_url,
-             c.rating, c.comment, c.created_at
+             c.rating, c.comment, c.parent_id, c.created_at
       FROM girl_comments c
       JOIN girls g ON g.id = c.girl_id
       ORDER BY c.created_at DESC

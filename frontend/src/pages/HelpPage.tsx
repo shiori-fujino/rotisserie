@@ -33,7 +33,6 @@ export default function HelpPage() {
           <Typography variant="body2">
             A: I only scraped the easy ones first. The spaghetti-coded websites will come later.  
             For now, I’m testing with around 100+ girls (6 shops × ~20 girls a day — did the math).  
-            Be patient, your turn might come.
           </Typography>
         </Box>
 

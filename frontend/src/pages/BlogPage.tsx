@@ -54,7 +54,7 @@ export default function BlogPage() {
   return (
     <Box sx={{ maxWidth: 800, mx: "auto", mt: 4 }}>
       <Typography variant="h4" gutterBottom>
-        Devnotes
+        Notes
       </Typography>
 
       <List>

@@ -124,7 +124,6 @@ def main():
                 shop_id = get_or_create_shop(cur,
                     name="Ginza Empire",
                     url=BASE,
-                    location="Sydney"
                 )
                 inserted = 0
                 for e in roster:

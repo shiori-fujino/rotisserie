@@ -1,13 +1,13 @@
 # db_utils.py
-# Lean + Neon-ready helpers for The Rotisserie
 import os
 import psycopg2
 from typing import Optional
+from dotenv import load_dotenv
 
 AUS_TZ = "Australia/Sydney"
+load_dotenv()
 
 def get_conn():
-    """Connect using DATABASE_URL from .env"""
     dsn = os.getenv("DATABASE_URL")
     if not dsn:
         raise RuntimeError("DATABASE_URL not set")
@@ -109,7 +109,7 @@ def upsert_roster_entry(cur, entry: dict, shop_id: int, girl_id: int) -> None:
     cur.execute(
         """
         INSERT INTO roster_entries (date, girl_id, shop_id, shift_text)
-        VALUES (CURRENT_DATE, %s, %s, %s)
+        VALUES ((NOW() AT TIME ZONE 'Australia/Sydney')::date, %s, %s, %s)
         ON CONFLICT (date, girl_id, shop_id) DO UPDATE
           SET shift_text = EXCLUDED.shift_text;
         """,

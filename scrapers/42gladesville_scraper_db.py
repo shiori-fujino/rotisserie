@@ -81,7 +81,7 @@ def scrape():
                 pr = fetch(profile_link)
                 if pr.status_code == 200:
                     psoup = BeautifulSoup(pr.text, "html.parser")
-                    img = psoup.select_one("img")
+                    img = psoup.select_one(".ladie-page__photos img")
                     if img:
                         entry["photo"] = urljoin(BASE, best_img_url(img))
             except Exception as e:

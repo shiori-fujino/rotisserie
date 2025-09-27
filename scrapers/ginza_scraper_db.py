@@ -130,7 +130,6 @@ def main():
                 shop_id = get_or_create_shop(cur,
                     name="Ginza Club",
                     url=BASE,
-                    location="Sydney"
                 )
                 inserted = 0
                 for e in roster:
