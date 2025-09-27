@@ -16,6 +16,7 @@ import {
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
+import { API_BASE } from "../config";
 
 export default function BlogPage() {
   const [posts, setPosts] = useState<any[]>([]);
@@ -23,8 +24,8 @@ export default function BlogPage() {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
   useEffect(() => {
-    const api = import.meta.env.VITE_API_URL || "";
-    axios.get(`${api}/api/blog`).then((res) => setPosts(res.data));
+    const api = import.meta.env.VITE_API_BASE || "";
+axios.get(`${api}/api/blog`).then((res) => setPosts(res.data));
   }, []);
 
   const handleClick = (index: number) => {

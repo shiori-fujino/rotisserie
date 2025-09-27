@@ -26,3 +26,4 @@ dist-ssr
 *.sw?
 
 __pycache__/
+scrapers/

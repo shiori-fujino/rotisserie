@@ -14,9 +14,10 @@ import {
 } from "@mui/material";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { API_BASE } from "../config";
 
 
-axios.defaults.baseURL = import.meta.env.VITE_API_URL;
+axios.defaults.baseURL = API_BASE;
 
 interface ContactMessage {
   id: number;
