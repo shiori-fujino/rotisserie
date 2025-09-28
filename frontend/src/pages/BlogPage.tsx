@@ -25,7 +25,7 @@ export default function BlogPage() {
 
   useEffect(() => {
     const api = import.meta.env.VITE_API_BASE || "";
-axios.get(`${api}/api/blog`).then((res) => setPosts(res.data));
+axios.get(`${API_BASE}/api/blog`).then((res) => setPosts(res.data));
   }, []);
 
   const handleClick = (index: number) => {
