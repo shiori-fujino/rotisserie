@@ -18,7 +18,7 @@ app.use(cors({ origin: true }));
 app.use(express.json());
 
 // mount
-app.use("api/views", viewsRoutes);
+app.use("/api/views", viewsRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/blog", blogRoutes);
 app.use("/api/comments", commentsRoutes);
