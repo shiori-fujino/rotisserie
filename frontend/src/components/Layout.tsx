@@ -84,7 +84,8 @@ export default function Layout({
           ·{" "}
           <MuiLink component={Link} to="/help" color="inherit" underline="hover">
             Help
-          </MuiLink>
+          </MuiLink>{" "}
+          ·{" "}
           <MuiLink component={Link} to="/data" color="inherit" underline="hover">
             Data
           </MuiLink>
