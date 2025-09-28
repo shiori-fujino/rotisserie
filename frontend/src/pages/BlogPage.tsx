@@ -24,7 +24,6 @@ export default function BlogPage() {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
   useEffect(() => {
-    const api = import.meta.env.VITE_API_BASE || "";
 axios.get(`${API_BASE}/api/blog`).then((res) => setPosts(res.data));
   }, []);
 
