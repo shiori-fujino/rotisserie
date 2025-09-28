@@ -7,6 +7,7 @@ import {
   Paper,
   CircularProgress,
 } from "@mui/material";
+import { API_BASE } from "../config";
 
 interface Stats {
   daysOnline: number;
@@ -26,7 +27,7 @@ export default function DataPage() {
   useEffect(() => {
     async function fetchStats() {
       try {
-        const res = await fetch("/api/stats");
+        const res = await fetch("${API_BASE}/api/stats");
         const json = await res.json();
         setStats(json);
       } catch (err) {
