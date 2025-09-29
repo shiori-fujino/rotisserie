@@ -1,26 +1,45 @@
-// routes/contact.ts
+// src/routes/contact.ts
 import express from "express";
-import pool  from "../db"; // your Postgres pool
+import pool from "../db";
 import jwt from "jsonwebtoken";
+import { z } from "zod";
 
 const router = express.Router();
 
-router.post("/", async (req, res) => {
-  const { message } = req.body;
-  if (!message) return res.status(400).json({ error: "Message required" });
+/* -------------------------------------------------------------------------- */
+/* Zod schema                                                                 */
+/* -------------------------------------------------------------------------- */
+const contactSchema = z.object({
+  message: z.string().trim().min(1, "Message required").max(2000, "Too long"),
+});
 
+/* -------------------------------------------------------------------------- */
+/* POST new contact message                                                   */
+/* -------------------------------------------------------------------------- */
+router.post("/", async (req, res) => {
   try {
+    const parsed = contactSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: "Invalid payload" });
+    }
+
+    const { message } = parsed.data;
+
     await pool.query(
       "INSERT INTO contact_messages (message, created_at) VALUES ($1, NOW())",
       [message]
     );
+
     res.json({ success: true });
   } catch (err) {
-    console.error(err);
+    console.error("contact insert error", err);
     res.status(500).json({ error: "Database insert failed" });
   }
 });
 
+/* -------------------------------------------------------------------------- */
+/* GET all contact messages (admin only)                                      */
+/* -------------------------------------------------------------------------- */
 router.get("/", async (req, res) => {
   try {
     const auth = req.headers.authorization;

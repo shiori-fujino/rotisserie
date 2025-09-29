@@ -1,9 +1,12 @@
+//backend/src/routes/visits.ts 
+
 import { Router } from "express";
 import pool from "../db";
+import { tightLimiter } from "../middleware/security";
 
 const router = Router();
 
-router.post("/", async (_req, res) => {
+router.post("/", tightLimiter, async (_req, res) => { 
   try {
     const q = `
       INSERT INTO site_visits (date, count)

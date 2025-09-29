@@ -1,8 +1,18 @@
 // src/routes/comments.ts
 import { Router } from "express";
 import pool from "../db";
+import { z } from "zod";
 
 const router = Router();
+
+/* -------------------------------------------------------------------------- */
+/* Zod schema for validation                                                  */
+/* -------------------------------------------------------------------------- */
+const commentSchema = z.object({
+  rating: z.number().int().min(1).max(5).nullable().optional(),
+  comment: z.string().trim().min(1).max(1000).nullable().optional(),
+  parent_id: z.number().int().nullable().optional(),
+});
 
 /* -------------------------------------------------------------------------- */
 /* GET comments for a girl (with replies)                                     */
@@ -29,14 +39,19 @@ router.get("/:girlId", async (req, res) => {
 /* -------------------------------------------------------------------------- */
 router.post("/:girlId", async (req, res) => {
   try {
+    const parsed = commentSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: "Invalid payload" });
+    }
+
     const { girlId } = req.params;
-    const { rating, comment, parent_id } = req.body;
+    const { rating, comment, parent_id } = parsed.data;
 
     const result = await pool.query(
       `INSERT INTO girl_comments (girl_id, rating, comment, parent_id)
        VALUES ($1, $2, $3, $4)
        RETURNING id, girl_id, rating, comment, parent_id, created_at`,
-      [girlId, rating || null, comment || null, parent_id || null]
+      [girlId, rating ?? null, comment ?? null, parent_id ?? null]
     );
 
     res.status(201).json(result.rows[0]);
@@ -71,15 +86,20 @@ router.get("/", async (_req, res) => {
 /* -------------------------------------------------------------------------- */
 router.put("/:id", async (req, res) => {
   try {
+    const parsed = commentSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: "Invalid payload" });
+    }
+
     const { id } = req.params;
-    const { comment, rating } = req.body;
+    const { comment, rating } = parsed.data;
 
     const result = await pool.query(
       `UPDATE girl_comments
        SET comment = $1, rating = $2
        WHERE id = $3
        RETURNING id, girl_id, rating, comment, parent_id, created_at`,
-      [comment || null, rating || null, id]
+      [comment ?? null, rating ?? null, id]
     );
 
     if (result.rows.length === 0) {
