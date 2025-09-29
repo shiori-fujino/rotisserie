@@ -1,8 +1,8 @@
 // src/routes/contact.ts
 import express from "express";
 import pool from "../db";
-import jwt from "jsonwebtoken";
 import { z } from "zod";
+import { requireAdmin } from "../middleware/auth";
 
 const router = express.Router();
 
@@ -14,7 +14,7 @@ const contactSchema = z.object({
 });
 
 /* -------------------------------------------------------------------------- */
-/* POST new contact message                                                   */
+/* POST new contact message (public)                                          */
 /* -------------------------------------------------------------------------- */
 router.post("/", async (req, res) => {
   try {
@@ -40,14 +40,8 @@ router.post("/", async (req, res) => {
 /* -------------------------------------------------------------------------- */
 /* GET all contact messages (admin only)                                      */
 /* -------------------------------------------------------------------------- */
-router.get("/", async (req, res) => {
+router.get("/", requireAdmin, async (_req, res) => {
   try {
-    const auth = req.headers.authorization;
-    if (!auth) return res.status(401).json({ error: "No token" });
-
-    const token = auth.split(" ")[1];
-    jwt.verify(token, process.env.JWT_SECRET || "supersecret");
-
     const { rows } = await pool.query(
       "SELECT id, message, created_at FROM contact_messages ORDER BY created_at DESC"
     );

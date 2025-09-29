@@ -14,6 +14,7 @@ import shopsRoutes from "./routes/shops";
 import statsRoutes from "./routes/stats";
 import visitsRoutes from "./routes/visits";
 import viewsRoutes from "./routes/views";
+
 console.log("DB URL:", process.env.DATABASE_URL);
 
 const app = express();
@@ -22,19 +23,23 @@ const app = express();
 app.use(express.json({ limit: "200kb" }));
 app.use(securityMiddleware);
 
-// apply a base limiter for all /api routes
+// base limiter for all /api routes
 app.use("/api", makeLimiter());
 
-// mount routes
+// public + spam-prone → extra tight
 app.use("/api/views", tightLimiter, viewsRoutes);
-app.use("/api/auth", authRoutes);
-app.use("/api/blog", blogRoutes);
 app.use("/api/comments", tightLimiter, commentsRoutes);
 app.use("/api/contact", tightLimiter, contactRoutes);
+
+// public read endpoints → base limiter is enough
 app.use("/api/roster", rosterRoutes);
 app.use("/api/shops", shopsRoutes);
 app.use("/api/stats", statsRoutes);
 app.use("/api/visits", visitsRoutes);
+
+// admin-only → already JWT protected
+app.use("/api/auth", authRoutes);
+app.use("/api/blog", blogRoutes);
 
 // health check
 app.get("/api/health", async (_req, res) => {

@@ -2,6 +2,7 @@
 import { Router } from "express";
 import pool from "../db";
 import { z } from "zod";
+import { requireAdmin } from "../middleware/auth";
 
 const router = Router();
 
@@ -37,8 +38,7 @@ router.get("/:girlId", async (req, res) => {
 /* -------------------------------------------------------------------------- */
 /* POST new comment or reply                                                  */
 /* -------------------------------------------------------------------------- */
-router.post("/:girlId", async (req, res) => {
-  try {
+router.post("/:girlId", requireAdmin, async (req, res) => {  try {
     const parsed = commentSchema.safeParse(req.body);
     if (!parsed.success) {
       return res.status(400).json({ error: "Invalid payload" });
@@ -84,8 +84,7 @@ router.get("/", async (_req, res) => {
 /* -------------------------------------------------------------------------- */
 /* UPDATE a comment (admin edit)                                              */
 /* -------------------------------------------------------------------------- */
-router.put("/:id", async (req, res) => {
-  try {
+router.put("/:id", requireAdmin, async (req, res) => {  try {
     const parsed = commentSchema.safeParse(req.body);
     if (!parsed.success) {
       return res.status(400).json({ error: "Invalid payload" });
@@ -116,8 +115,7 @@ router.put("/:id", async (req, res) => {
 /* -------------------------------------------------------------------------- */
 /* DELETE a comment (admin remove)                                            */
 /* -------------------------------------------------------------------------- */
-router.delete("/:id", async (req, res) => {
-  try {
+router.delete("/:id", requireAdmin, async (req, res) => {  try {
     const { id } = req.params;
 
     const result = await pool.query(
