@@ -7,17 +7,23 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Environment files
 *.env
 
-node_modules
-dist
-dist-ssr
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+dist-ssr/
+
+# Local overrides
 *.local
 
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
-.idea
+.idea/
 .DS_Store
 *.suo
 *.ntvs*
@@ -25,5 +31,8 @@ dist-ssr
 *.sln
 *.sw?
 
+# Python cache
 __pycache__/
+
+# Scrapers (local only, not in repo)
 scrapers/
