@@ -1,69 +1,77 @@
-# React + TypeScript + Vite
+# 🍗 The Rotisserie
+### $3x Shop (Brothel) Roster Aggregator
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+**Disclaimer:** $3x work in Sydney, Australia is fully legal, regulated, and protected.  
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Why this exists
+Because the old-ass $ex forums are trash.  
+- Bad design  
+- Confusing UX  
+- BBCode (yes, *phpBB*… what year is it??)  
+- Harassing people instead of helping  
 
-## Expanding the ESLint configuration
+All people wanted was to check who’s working today without clicking 50 posts. So I built it.  
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+---
 
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## What it does
+- 🐍 **Python scrapers** → pull rosters from shop websites  
+- ⚛️ **React + Vite frontend** → display them nicely  
+- 🤷 **TypeScript** → idk tbh but it works  
 
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
+---
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+## Real world problem
+- Shops upload rosters in unreadable formats  
+- Forums make it *even worse*  
+- Users just want photos + availability in one glance  
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+---
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## My solution
+- Filter by **shop** or **nationality** (or both!)  
+- Roster shown in a **Pinterest-style grid**  
+- Shuffle button → refresh lineup instantly  
+- Straightforward, no bullshit: *“who’s working today”*  
 
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+---
+
+## Tech stack
+- **Backend**: Python, Express, Postgres  
+- **Frontend**: React, Vite, TypeScript  
+- **Hosting**: Railway + Vercel  
+
+---
+
+## Roadmap
+- [ ] Add more shops (currently scraping 6, ~100+ girls)  
+- [ ] SEO optimisation  
+- [ ] Merch? (Rotisserie chicken jumper kek)  
+
+---
+
+## Demo
+🚧 rotisserie.vercel.app
+
+---
+
+## License
+This project is **free to use** — check the rosters, enjoy the vibes 🍗.  
+
+But:  
+- ❌ Don’t modify and pretend it’s yours  
+- ❌ Don’t build a “better” copy-paste version and charge money  
+
+Yes:  
+- ✅ Use it personally  
+- ✅ Show your friends  
+- ✅ Send me feedback / ideas  
+
+Basically: **share, don’t exploit**.
+
+---
+
+Made with love & spite 💔 in Sydney, AU.
+
