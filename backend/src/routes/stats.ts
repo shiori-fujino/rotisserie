@@ -1,3 +1,5 @@
+//backend/src/routes/stats.ts
+ 
 import { Router } from "express";
 import pool from "../db";
 
