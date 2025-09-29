@@ -1,4 +1,5 @@
 // src/App.tsx
+import { useEffect } from "react";
 import { Routes, Route } from "react-router-dom";
 import HomePage from "./pages/HomePage";
 import HelpPage from "./pages/HelpPage";
@@ -9,8 +10,16 @@ import AboutPage from "./pages/AboutPage";
 import NotFoundPage from "./pages/NotFoundPage";
 import AdminPage from "./pages/AdminPage";
 import DataPage from "./pages/DataPage";
+import { API_BASE } from "./config";
 
 export default function App() {
+  // 🔹 track visit once per app load
+  useEffect(() => {
+    fetch(`${API_BASE}/api/visit`, { method: "POST" }).catch(() =>
+      console.warn("visit track failed")
+    );
+  }, []);
+
   return (
     <Routes>
       <Route path="*" element={<NotFoundPage />} />
@@ -21,7 +30,6 @@ export default function App() {
       <Route path="/blog" element={<Layout><BlogPage /></Layout>} />
       <Route path="/admin" element={<Layout><AdminPage /></Layout>} />
       <Route path="/data" element={<Layout><DataPage /></Layout>} />
-
     </Routes>
   );
 }

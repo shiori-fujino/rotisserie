@@ -1,3 +1,4 @@
+// src/pages/AdminPage.tsx
 import { useEffect, useState } from "react";
 import axios from "axios";
 import {
@@ -16,7 +17,6 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { API_BASE } from "../config";
 
-
 axios.defaults.baseURL = API_BASE;
 
 interface ContactMessage {
@@ -32,6 +32,15 @@ interface BlogPost {
   created_at: string;
 }
 
+interface Comment {
+  id: number;
+  girl_id: number;
+  girl_name: string;
+  comment: string | null;
+  rating: number | null;
+  created_at: string;
+}
+
 export default function AdminPage() {
   const [tab, setTab] = useState(0);
 
@@ -41,6 +50,10 @@ export default function AdminPage() {
   );
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+
+  // Comments state
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [loadingComments, setLoadingComments] = useState(false);
 
   // Messages state
   const [messages, setMessages] = useState<ContactMessage[]>([]);
@@ -91,9 +104,56 @@ export default function AdminPage() {
     }
   }, [tab, token]);
 
-  // ----------------- FETCH BLOG POSTS -----------------
+  // ----------------- FETCH COMMENTS -----------------
   useEffect(() => {
     if (tab === 1 && token) {
+      const fetchComments = async () => {
+        setLoadingComments(true);
+        try {
+          const res = await axios.get<Comment[]>("/api/comments", {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          setComments(res.data);
+        } catch (err) {
+          console.error("Failed to fetch comments", err);
+        } finally {
+          setLoadingComments(false);
+        }
+      };
+      fetchComments();
+    }
+  }, [tab, token]);
+
+  const deleteComment = async (id: number) => {
+    if (!window.confirm("Delete this comment?")) return;
+    try {
+      await axios.delete(`/api/comments/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setComments(comments.filter((c) => c.id !== id));
+    } catch (err) {
+      console.error("Failed to delete comment", err);
+    }
+  };
+
+  const updateComment = async (c: Comment) => {
+    const newText = prompt("Edit comment:", c.comment || "") || c.comment;
+    if (newText === c.comment) return;
+    try {
+      const res = await axios.put<Comment>(
+        `/api/comments/${c.id}`,
+        { comment: newText, rating: c.rating },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setComments(comments.map((x) => (x.id === c.id ? res.data : x)));
+    } catch (err) {
+      console.error("Failed to update comment", err);
+    }
+  };
+
+  // ----------------- FETCH BLOG POSTS -----------------
+  useEffect(() => {
+    if (tab === 2 && token) {
       const fetchPosts = async () => {
         setLoadingPosts(true);
         try {
@@ -202,6 +262,7 @@ export default function AdminPage() {
 
       <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 3 }}>
         <Tab label="Contact Messages" />
+        <Tab label="Comments" />
         <Tab label="Blog Posts" />
         <Tab label="(Future) Analytics" />
       </Tabs>
@@ -238,8 +299,62 @@ export default function AdminPage() {
         </Box>
       )}
 
-      {/* BLOG POSTS */}
+      {/* COMMENTS */}
       {tab === 1 && (
+        <Box>
+          <Typography variant="h6" gutterBottom>
+            Comments
+          </Typography>
+          {loadingComments ? (
+            <Box sx={{ textAlign: "center", mt: 4 }}>
+              <CircularProgress />
+              <Typography sx={{ mt: 2 }}>Loading comments…</Typography>
+            </Box>
+          ) : (
+            <Stack spacing={2}>
+              {comments.map((c) => (
+                <Paper key={c.id} sx={{ p: 2 }}>
+                  <Typography variant="subtitle1">
+                    {c.girl_name || "Unknown Girl"}
+                  </Typography>
+                  <Typography variant="body2" sx={{ mb: 1 }}>
+                    {c.comment || "—"}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {new Date(c.created_at).toLocaleString()} | ⭐{" "}
+                    {c.rating ?? "N/A"}
+                  </Typography>
+                  <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      onClick={() => updateComment(c)}
+                    >
+                      Edit
+                    </Button>
+                    <Button
+                      size="small"
+                      color="error"
+                      variant="outlined"
+                      onClick={() => deleteComment(c.id)}
+                    >
+                      Delete
+                    </Button>
+                  </Stack>
+                </Paper>
+              ))}
+              {comments.length === 0 && (
+                <Typography variant="body2" color="text.secondary">
+                  No comments yet 🐓
+                </Typography>
+              )}
+            </Stack>
+          )}
+        </Box>
+      )}
+
+      {/* BLOG POSTS */}
+      {tab === 2 && (
         <Box>
           <Typography variant="h6" gutterBottom>
             Blog Posts
@@ -392,7 +507,7 @@ export default function AdminPage() {
       )}
 
       {/* ANALYTICS (FUTURE) */}
-      {tab === 2 && (
+      {tab === 3 && (
         <Box>
           <Typography variant="h6">Analytics (coming soon…)</Typography>
         </Box>

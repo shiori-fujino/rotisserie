@@ -1,6 +1,7 @@
 // routes/contact.ts
 import express from "express";
 import pool  from "../db"; // your Postgres pool
+import jwt from "jsonwebtoken";
 
 const router = express.Router();
 
@@ -17,6 +18,24 @@ router.post("/", async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Database insert failed" });
+  }
+});
+
+router.get("/", async (req, res) => {
+  try {
+    const auth = req.headers.authorization;
+    if (!auth) return res.status(401).json({ error: "No token" });
+
+    const token = auth.split(" ")[1];
+    jwt.verify(token, process.env.JWT_SECRET || "supersecret");
+
+    const { rows } = await pool.query(
+      "SELECT id, message, created_at FROM contact_messages ORDER BY created_at DESC"
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error("contact get error", err);
+    res.status(500).json({ error: "Could not fetch messages" });
   }
 });
 

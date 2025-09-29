@@ -66,4 +66,54 @@ router.get("/", async (_req, res) => {
   }
 });
 
+/* -------------------------------------------------------------------------- */
+/* UPDATE a comment (admin edit)                                              */
+/* -------------------------------------------------------------------------- */
+router.put("/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { comment, rating } = req.body;
+
+    const result = await pool.query(
+      `UPDATE girl_comments
+       SET comment = $1, rating = $2
+       WHERE id = $3
+       RETURNING id, girl_id, rating, comment, parent_id, created_at`,
+      [comment || null, rating || null, id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "Comment not found" });
+    }
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error("update comment error", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+/* -------------------------------------------------------------------------- */
+/* DELETE a comment (admin remove)                                            */
+/* -------------------------------------------------------------------------- */
+router.delete("/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const result = await pool.query(
+      `DELETE FROM girl_comments WHERE id = $1 RETURNING id`,
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "Comment not found" });
+    }
+
+    res.json({ success: true, id });
+  } catch (err) {
+    console.error("delete comment error", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
 export default router;
