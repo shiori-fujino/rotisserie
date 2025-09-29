@@ -15,7 +15,7 @@ import { API_BASE } from "./config";
 export default function App() {
   // 🔹 track visit once per app load
   useEffect(() => {
-    fetch(`${API_BASE}/api/visit`, { method: "POST" }).catch(() =>
+    fetch(`${API_BASE}/api/visits`, { method: "POST" }).catch(() =>
       console.warn("visit track failed")
     );
   }, []);
