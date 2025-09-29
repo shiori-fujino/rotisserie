@@ -18,6 +18,7 @@ import viewsRoutes from "./routes/views";
 console.log("DB URL:", process.env.DATABASE_URL);
 
 const app = express();
+app.set("trust proxy", 1); 
 
 // global middlewares
 app.use(express.json({ limit: "200kb" }));
