@@ -27,6 +27,7 @@ interface GirlModalProps {
   profileUrl: string;
   onViewsUpdated?: (girlId: number) => void;
   onCommentsUpdated?: (girlId: number) => void;
+  highlightCommentId?: number; // 👈 NEW
 }
 
 interface Comment {
@@ -45,6 +46,7 @@ export default function GirlModal({
   profileUrl,
   onViewsUpdated,
   onCommentsUpdated,
+  highlightCommentId,
 }: GirlModalProps) {
   const [comments, setComments] = useState<Comment[]>([]);
   const [views, setViews] = useState(0);
@@ -79,28 +81,39 @@ export default function GirlModal({
     }
   }, [open, girlId]);
 
+  // 🔥 scroll + highlight specific comment if passed
+  useEffect(() => {
+    if (highlightCommentId) {
+      const el = document.getElementById(`comment-${highlightCommentId}`);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        el.classList.add("highlighted-comment");
+        setTimeout(() => el.classList.remove("highlighted-comment"), 2500);
+      }
+    }
+  }, [comments, highlightCommentId]);
+
   // 🔥 submit new top-level comment
   const handleSubmitComment = async () => {
-  try {
-    await axios.post(`${API_BASE}/api/comments/${girlId}`, {
-      rating: rating && rating > 0 ? rating : null,
-      comment: comment?.trim() || null,
-    });
+    try {
+      await axios.post(`${API_BASE}/api/comments/${girlId}`, {
+        rating: rating && rating > 0 ? rating : null,
+        comment: comment?.trim() || null,
+      });
 
-    setComment("");
-    setRating(null);
+      setComment("");
+      setRating(null);
 
-    const res = await axios.get(`${API_BASE}/api/comments/${girlId}`);
-    setComments(res.data);
-    setCommentsCount(res.data.length);
+      const res = await axios.get(`${API_BASE}/api/comments/${girlId}`);
+      setComments(res.data);
+      setCommentsCount(res.data.length);
 
-    if (onCommentsUpdated) onCommentsUpdated(girlId);
-    setSnackbarOpen(true);
-  } catch (err) {
-    console.error("add comment error", err);
-  }
-};
-
+      if (onCommentsUpdated) onCommentsUpdated(girlId);
+      setSnackbarOpen(true);
+    } catch (err) {
+      console.error("add comment error", err);
+    }
+  };
 
   // 🔥 submit reply
   const handleSubmitReply = async (parentId: number) => {
@@ -161,7 +174,7 @@ export default function GirlModal({
             ) : (
               <Stack spacing={2} sx={{ mt: 1 }}>
                 {topLevel.map((c) => (
-                  <Box key={c.id} sx={{ mb: 1 }}>
+                  <Box key={c.id} id={`comment-${c.id}`} sx={{ mb: 1 }}>
                     {c.rating && <Rating value={c.rating} readOnly size="small" />}
                     <Typography variant="body2">{c.comment}</Typography>
                     <Typography variant="caption" color="text.secondary">
@@ -176,6 +189,7 @@ export default function GirlModal({
                     {repliesMap[c.id]?.map((reply) => (
                       <Box
                         key={reply.id}
+                        id={`comment-${reply.id}`}
                         sx={{ ml: 4, mt: 1, p: 1, bgcolor: "#f9f9f9", borderRadius: 1 }}
                       >
                         <Typography variant="body2">{reply.comment}</Typography>

@@ -16,6 +16,7 @@ import {
   Button,
   Stack,
 } from "@mui/material";
+import GirlModal from "../components/GirlModal";
 
 interface CommentItem {
   id: number;
@@ -33,6 +34,13 @@ export default function CommentsPage() {
   const [offset, setOffset] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const LIMIT = 20;
+
+  const [selectedGirl, setSelectedGirl] = useState<{
+    id: number;
+    name: string;
+    profileUrl: string;
+    highlightCommentId?: number;
+  } | null>(null);
 
   const loadComments = async (reset = false) => {
     try {
@@ -97,16 +105,31 @@ export default function CommentsPage() {
                         />
                       )}
                     </Box>
-                    {c.profile_url && (
+                    <Stack direction="row" spacing={1}>
+                      {c.profile_url && (
+                        <Button
+                          href={c.profile_url}
+                          target="_blank"
+                          rel="noreferrer"
+                          size="small"
+                        >
+                          Visit profile →
+                        </Button>
+                      )}
                       <Button
-                        href={c.profile_url}
-                        target="_blank"
-                        rel="noreferrer"
                         size="small"
+                        onClick={() =>
+                          setSelectedGirl({
+                            id: c.girl_id,
+                            name: c.girl_name || "Unknown",
+                            profileUrl: c.profile_url || "#",
+                            highlightCommentId: c.id, // 👈 pass comment id
+                          })
+                        }
                       >
-                        Visit profile →
+                        View comment →
                       </Button>
-                    )}
+                    </Stack>
                   </Stack>
                 }
                 secondary={
@@ -127,7 +150,6 @@ export default function CommentsPage() {
                     </Typography>
                   </>
                 }
-                // ✅ this prevents the wrapper <p>
                 secondaryTypographyProps={{ component: "div" }}
               />
             </ListItem>
@@ -142,6 +164,18 @@ export default function CommentsPage() {
             Load more comments
           </Button>
         </Box>
+      )}
+
+      {/* Girl Modal */}
+      {selectedGirl && (
+        <GirlModal
+          open={!!selectedGirl}
+          onClose={() => setSelectedGirl(null)}
+          girlId={selectedGirl.id}
+          girlName={selectedGirl.name}
+          profileUrl={selectedGirl.profileUrl}
+          highlightCommentId={selectedGirl.highlightCommentId} // 👈 new prop
+        />
       )}
     </Container>
   );
