@@ -81,24 +81,26 @@ export default function GirlModal({
 
   // 🔥 submit new top-level comment
   const handleSubmitComment = async () => {
-    try {
-      await axios.post(`${API_BASE}/api/comments/${girlId}`, {
-        rating,
-        comment,
-      });
-      setComment("");
-      setRating(0);
+  try {
+    await axios.post(`${API_BASE}/api/comments/${girlId}`, {
+      rating: rating && rating > 0 ? rating : null,
+      comment: comment?.trim() || null,
+    });
 
-      const res = await axios.get(`${API_BASE}/api/comments/${girlId}`);
-      setComments(res.data);
-      setCommentsCount(res.data.length);
+    setComment("");
+    setRating(null);
 
-      if (onCommentsUpdated) onCommentsUpdated(girlId);
-      setSnackbarOpen(true);
-    } catch (err) {
-      console.error("add comment error", err);
-    }
-  };
+    const res = await axios.get(`${API_BASE}/api/comments/${girlId}`);
+    setComments(res.data);
+    setCommentsCount(res.data.length);
+
+    if (onCommentsUpdated) onCommentsUpdated(girlId);
+    setSnackbarOpen(true);
+  } catch (err) {
+    console.error("add comment error", err);
+  }
+};
+
 
   // 🔥 submit reply
   const handleSubmitReply = async (parentId: number) => {
