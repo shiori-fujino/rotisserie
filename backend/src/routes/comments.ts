@@ -38,7 +38,7 @@ router.get("/:girlId", async (req, res) => {
 /* -------------------------------------------------------------------------- */
 /* POST new comment or reply                                                  */
 /* -------------------------------------------------------------------------- */
-router.post("/:girlId", requireAdmin, async (req, res) => {  try {
+router.post("/:girlId", async (req, res) => {  try {
     const parsed = commentSchema.safeParse(req.body);
     if (!parsed.success) {
       return res.status(400).json({ error: "Invalid payload" });
