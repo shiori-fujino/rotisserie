@@ -3,6 +3,7 @@ import "dotenv/config";
 import express from "express";
 import pool from "./db";
 import { securityMiddleware, makeLimiter, tightLimiter } from "./middleware/security";
+import cors from "cors";
 
 // route modules
 import authRoutes from "./routes/auth";
@@ -19,7 +20,16 @@ console.log("DB URL:", process.env.DATABASE_URL);
 
 const app = express();
 app.set("trust proxy", 1); 
-
+// ✅ CORS config goes BEFORE routes
+app.use(
+  cors({
+    origin: [
+      "https://rotisserie.vercel.app",     // local dev (CRA default)
+      "https://rotisserie.today",  // your production frontend
+    ],
+    credentials: true,
+  })
+);
 // global middlewares
 app.use(express.json({ limit: "200kb" }));
 app.use(securityMiddleware);
