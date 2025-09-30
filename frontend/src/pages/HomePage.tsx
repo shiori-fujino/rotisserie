@@ -15,6 +15,8 @@ import RosterGrid from "../components/RosterGrid";
 import GirlModal from "../components/GirlModal";
 import Layout from "../components/Layout";
 import type { RosterItem } from "../types";
+import PumpkinRain from "../components/seasonal/PumpkinRain";
+
 
 function shuffleArray<T>(array: T[]): T[] {
   return array
@@ -166,6 +168,7 @@ export default function HomePage() {
           )}
         </Container>
       </Box>
+      {!loading && <PumpkinRain />}
     </Layout>
   );
 }
