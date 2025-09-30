@@ -105,31 +105,16 @@ export default function CommentsPage() {
                         />
                       )}
                     </Box>
-                    <Stack direction="row" spacing={1}>
-                      {c.profile_url && (
-                        <Button
-                          href={c.profile_url}
-                          target="_blank"
-                          rel="noreferrer"
-                          size="small"
-                        >
-                          Visit profile →
-                        </Button>
-                      )}
+                    {c.profile_url && (
                       <Button
+                        href={c.profile_url}
+                        target="_blank"
+                        rel="noreferrer"
                         size="small"
-                        onClick={() =>
-                          setSelectedGirl({
-                            id: c.girl_id,
-                            name: c.girl_name || "Unknown",
-                            profileUrl: c.profile_url || "#",
-                            highlightCommentId: c.id, // 👈 pass comment id
-                          })
-                        }
                       >
-                        View comment →
+                        Visit profile →
                       </Button>
-                    </Stack>
+                    )}
                   </Stack>
                 }
                 secondary={
@@ -137,7 +122,19 @@ export default function CommentsPage() {
                     <Typography
                       variant="body2"
                       component="span"
-                      sx={{ whiteSpace: "pre-line" }}
+                      sx={{
+                        whiteSpace: "pre-line",
+                        cursor: "pointer",
+                        display: "block",
+                      }}
+                      onClick={() =>
+                        setSelectedGirl({
+                          id: c.girl_id,
+                          name: c.girl_name || "Unknown",
+                          profileUrl: c.profile_url || "#",
+                          highlightCommentId: c.id,
+                        })
+                      }
                     >
                       {c.comment}
                     </Typography>
@@ -174,7 +171,7 @@ export default function CommentsPage() {
           girlId={selectedGirl.id}
           girlName={selectedGirl.name}
           profileUrl={selectedGirl.profileUrl}
-          highlightCommentId={selectedGirl.highlightCommentId} // 👈 new prop
+          highlightCommentId={selectedGirl.highlightCommentId}
         />
       )}
     </Container>

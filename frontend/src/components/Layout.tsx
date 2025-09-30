@@ -18,7 +18,14 @@ export default function Layout({
   onShuffle?: () => void;
 }) {
   return (
-    <Box sx={{ color: "#47403a", minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+    <Box
+      sx={{
+        color: "#47403a",
+        minHeight: "100vh",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
       {/* Top Nav */}
       <AppBar position="sticky" color="inherit" elevation={1}>
         <Toolbar>
@@ -60,7 +67,7 @@ export default function Layout({
       </AppBar>
 
       {/* Content area */}
-      <Box sx={{ p: 3, flex: 1 }}>{children}</Box>
+      <Box sx={{ py: 3, px: 1.5, flex: 1 }}>{children}</Box>
 
       {/* Footer */}
       <Box
