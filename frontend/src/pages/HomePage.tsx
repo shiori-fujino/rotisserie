@@ -16,6 +16,9 @@ import GirlModal from "../components/GirlModal";
 import Layout from "../components/Layout";
 import type { RosterItem } from "../types";
 import PumpkinRain from "../components/seasonal/PumpkinRain";
+import Midnight from "./Midnight";
+import ErrorDbPulling from "./ErrorDbPulling";
+
 
 
 function shuffleArray<T>(array: T[]): T[] {
@@ -26,9 +29,18 @@ function shuffleArray<T>(array: T[]): T[] {
 }
 
 export default function HomePage() {
+  const now = new Date();
+  const hours = now.getHours();
+  const minutes = now.getMinutes();
+  const isMidnight = hours === 0 && minutes < 10;
+
+  const { data, loading, error } = useRosterData();
+
+  if (isMidnight) return <Midnight />;
+  if (error) return <ErrorDbPulling />;
+
   const [shuffled, setShuffled] = useState<RosterItem[]>([]);
   const [selectedGirl, setSelectedGirl] = useState<RosterItem | null>(null);
-  const { data, loading, error } = useRosterData();
   const [filters, setFilters] = useState<Filters>({
     shop: "",
     origin: "",

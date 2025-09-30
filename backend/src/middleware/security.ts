@@ -19,7 +19,7 @@ export const securityMiddleware = [
 export const makeLimiter = (opts?: Partial<Options>) =>
   rateLimit({
     windowMs: 10 * 60 * 1000, // 10 minutes
-    limit: 120,               // 120 requests per IP per window
+    limit: 200,               // 120 requests per IP per window
     standardHeaders: true,    // send rate limit info in headers
     legacyHeaders: false,     // don’t use old headers
     ...opts,
@@ -28,5 +28,5 @@ export const makeLimiter = (opts?: Partial<Options>) =>
 // Strict limiter for spammy endpoints (e.g. comments, contact forms)
 export const tightLimiter = makeLimiter({
   windowMs: 10 * 60 * 1000,
-  limit: 30,
+  limit: 100,
 });
