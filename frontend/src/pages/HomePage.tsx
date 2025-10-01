@@ -15,7 +15,6 @@ import RosterGrid from "../components/RosterGrid";
 import GirlModal from "../components/GirlModal";
 import Layout from "../components/Layout";
 import type { RosterItem } from "../types";
-import PumpkinRain from "../components/seasonal/PumpkinRain";
 import Midnight from "./Midnight";
 import ErrorDbPulling from "./ErrorDbPulling";
 
@@ -180,7 +179,6 @@ export default function HomePage() {
           )}
         </Container>
       </Box>
-      {!loading && <PumpkinRain />}
     </Layout>
   );
 }
