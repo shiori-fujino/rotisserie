@@ -43,8 +43,8 @@ export default function GridCard({
         }}
       />
 
-      {/* 🔥 Overlay if fallback triggered */}
-      {isFallback && (
+      {/* 🔥 Overlay if fallback triggered OR no photo provided */}
+      {(!item.photo || isFallback) && (
         <Box
           sx={{
             position: "absolute",
@@ -52,10 +52,11 @@ export default function GridCard({
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            bgcolor: "rgba(0,0,0,0.6)",
+            bgcolor: "rgba(0,0,0,0.6)", // dimmed mask
             color: "white",
             textAlign: "center",
             px: 1,
+            zIndex: 2,
           }}
         >
           <Typography variant="caption">
