@@ -33,6 +33,7 @@ dist-ssr/
 
 # Python cache
 __pycache__/
-
-# Scrapers (local only, not in repo)
-scrapers/
+# Scrapers
+scrapers/__pycache__/
+scrapers/*.json
+scrapers/.env

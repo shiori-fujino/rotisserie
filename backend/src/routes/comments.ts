@@ -14,6 +14,18 @@ const commentSchema = z.object({
   comment: z.string().trim().min(1).max(1000).nullable().optional(),
   parent_id: z.number().int().nullable().optional(),
 });
+function applyHeatDecay(row: any, halfLifeHours = 24) {
+  const now = new Date();
+  const lastDecay = new Date(row.last_decay);
+  const hoursPassed = (now.getTime() - lastDecay.getTime()) / (1000 * 60 * 60);
+
+  if (hoursPassed <= 0) return row.heat;
+
+  const decayFactor = Math.pow(0.5, hoursPassed / halfLifeHours);
+  const newHeat = Math.floor(row.heat * decayFactor);
+
+  return newHeat;
+}
 
 /* -------------------------------------------------------------------------- */
 /* GET comments for a girl (with replies)                                     */
@@ -133,5 +145,97 @@ router.delete("/:id", requireAdmin, async (req, res) => {  try {
     res.status(500).json({ error: "Server error" });
   }
 });
+// Get comments for a thread
+router.get("/thread/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await pool.query(
+      "SELECT * FROM girl_comments WHERE thread_id = $1 ORDER BY created_at ASC",
+      [id]
+    );
+    const decayed = await Promise.all(
+  result.rows.map(async (row) => {
+    const decayedHeat = applyHeatDecay(row);
+    if (decayedHeat !== row.heat) {
+      const update = await pool.query(
+        "UPDATE girl_comments SET heat = $1, last_decay = NOW() WHERE id = $2 RETURNING *",
+        [decayedHeat, row.id]
+      );
+      return update.rows[0];
+    }
+    return row;
+  })
+);
+
+res.json(decayed);
+
+  } catch (err) {
+    console.error("Error fetching thread comments:", err);
+    res.status(500).json({ error: "Failed to fetch comments" });
+  }
+});
+// Add a comment to a thread
+router.post("/", async (req, res) => {
+  const { text, thread_id, parent_id, user_mask } = req.body;
+  try {
+    const result = await pool.query(
+      `INSERT INTO girl_comments (comment, thread_id, parent_id, user_mask)
+       VALUES ($1, $2, $3, $4) RETURNING *`,
+      [text, thread_id || null, parent_id || null, user_mask || null]
+    );
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error("Error posting comment:", err);
+    res.status(500).json({ error: "Failed to post comment" });
+  }
+});
+// Add heat (upvote) to a comment
+router.post("/:id/heat", async (req, res) => {
+  const { id } = req.params;
+
+  if (isNaN(Number(id))) {
+    return res.status(400).json({ error: "Invalid comment ID" });
+  }
+
+  try {
+    // Step 1: fetch the comment
+    const current = await pool.query(
+      "SELECT * FROM girl_comments WHERE id = $1",
+      [id]
+    );
+    if (current.rows.length === 0) {
+      return res.status(404).json({ error: "Comment not found" });
+    }
+
+    let comment = current.rows[0];
+
+    // Step 2: apply decay
+    const decayedHeat = applyHeatDecay(comment);
+
+    if (decayedHeat !== comment.heat) {
+      const update = await pool.query(
+        "UPDATE girl_comments SET heat = $1, last_decay = NOW() WHERE id = $2 RETURNING *",
+        [decayedHeat, id]
+      );
+      comment = update.rows[0];
+    }
+
+    // Step 3: now add +1 heat
+    const result = await pool.query(
+  `UPDATE girl_comments
+   SET heat = heat + 1
+   WHERE id = $1
+   RETURNING id, girl_id, thread_id, rating, comment, parent_id, user_mask, heat, last_decay, created_at`,
+  [id]
+);
+
+res.json(result.rows[0]);
+
+  } catch (err) {
+    console.error("Error adding heat to comment:", err);
+    res.status(500).json({ error: "Failed to add heat" });
+  }
+});
+
 
 export default router;

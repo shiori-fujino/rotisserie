@@ -10,6 +10,8 @@ import AboutPage from "./pages/AboutPage";
 import NotFoundPage from "./pages/NotFoundPage";
 import AdminPage from "./pages/AdminPage";
 import DataPage from "./pages/DataPage";
+import GrillHome from "./pages/GrillHome";
+import GrillThread from "./pages/GrillThread"
 import { API_BASE } from "./config";
 
 export default function App() {
@@ -30,6 +32,9 @@ export default function App() {
       <Route path="/blog" element={<Layout><BlogPage /></Layout>} />
       <Route path="/admin" element={<Layout><AdminPage /></Layout>} />
       <Route path="/data" element={<Layout><DataPage /></Layout>} />
+      <Route path="/grill" element={<Layout><GrillHome /></Layout>} />
+      <Route path="/grill/:id" element={<Layout><GrillThread /></Layout>} />
+
     </Routes>
   );
 }

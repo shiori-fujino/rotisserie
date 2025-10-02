@@ -15,6 +15,8 @@ import shopsRoutes from "./routes/shops";
 import statsRoutes from "./routes/stats";
 import visitsRoutes from "./routes/visits";
 import viewsRoutes from "./routes/views";
+import threadRoutes from "./routes/threads";
+
 
 console.log("DB URL:", process.env.DATABASE_URL);
 
@@ -24,12 +26,15 @@ app.set("trust proxy", 1);
 app.use(
   cors({
     origin: [
-      "https://rotisserie.vercel.app",     // local dev (CRA default)
-      "https://rotisserie.today",  // your production frontend
+      "https://rotisserie.vercel.app",
+      "https://rotisserie.today",
+      "http://localhost:5173",
     ],
     credentials: true,
   })
 );
+
+
 // global middlewares
 app.use(express.json({ limit: "200kb" }));
 app.use(securityMiddleware);
@@ -41,7 +46,7 @@ app.use("/api", makeLimiter());
 app.use("/api/views", tightLimiter, viewsRoutes);
 app.use("/api/comments", tightLimiter, commentsRoutes);
 app.use("/api/contact", tightLimiter, contactRoutes);
-
+app.use("/api/threads", threadRoutes);
 // public read endpoints → base limiter is enough
 app.use("/api/roster", rosterRoutes);
 app.use("/api/shops", shopsRoutes);
