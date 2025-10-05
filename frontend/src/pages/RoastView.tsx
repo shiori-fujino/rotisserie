@@ -11,7 +11,6 @@ import {
   Button,
   TextField,
   Stack,
-  Rating,
   Link,
 } from "@mui/material";
 import { useParams } from "react-router-dom";

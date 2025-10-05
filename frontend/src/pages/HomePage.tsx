@@ -1,12 +1,10 @@
 import { useMemo, useState } from "react";
 import {
   Container,
-  Box,
   Stack,
   Divider,
   CircularProgress,
   Typography,
-  Button,
 } from "@mui/material";
 import useRosterData from "../hooks/useRosterData";
 import FiltersBar, { Filters } from "../components/FiltersBar";
