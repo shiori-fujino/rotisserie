@@ -47,9 +47,6 @@ export default function Layout({
           <Box sx={{ flex: 1 }} />
 
           {/* Menu buttons */}
-          <Button color="inherit" component={Link} to="/comments">
-            Comments
-          </Button>
           <Button color="inherit" component={Link} to="/help">
             Help
           </Button>

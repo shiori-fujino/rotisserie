@@ -25,7 +25,10 @@ interface GirlModalProps {
   girlName: string;
   profileUrl: string;
   onViewsUpdated?: (girlId: number) => void;
-  onCommentsUpdated?: (girlId: number) => void;
+  onCommentsUpdated?: (
+    girlId: number,
+    newStats?: { commentsCount?: number; avgRating?: number }
+  ) => void;
   highlightCommentId?: number;
 }
 
@@ -54,34 +57,34 @@ export default function GirlModal({
 
   const [rating, setRating] = useState<number | null>(0);
   const [comment, setComment] = useState("");
-
   const [replyTo, setReplyTo] = useState<number | null>(null);
   const [replyText, setReplyText] = useState("");
-
   const [snackbarOpen, setSnackbarOpen] = useState(false);
 
-  // 🔥 load counts + comments when modal opens
+  // 🧠 load comments only once per open
   useEffect(() => {
-    if (open && girlId) {
-      axios.get(`${API_BASE}/api/threads/${girlId}/comments`).then((res) => {
-        setComments(res.data.comments);
-        setCommentsCount(res.data.commentsCount);
-        setAvgRating(res.data.avgRating);
-      });
-    }
+    if (!open || !girlId) return;
+    axios
+      .get(`${API_BASE}/api/roasts/${girlId}/replies`)
+      .then((res) => {
+        setComments(res.data.replies || []);
+        setCommentsCount(res.data.repliesCount ?? 0);
+        setAvgRating(res.data.avgRating ?? 0);
+      })
+      .catch((err) => console.error("fetch replies error", err));
   }, [open, girlId]);
 
-  // 🔥 increment views once per open
+  // 👀 increment views once
   useEffect(() => {
     if (open && girlId) {
       axios.post(`${API_BASE}/api/views/${girlId}`).then((res) => {
         setViews(res.data.views);
-        if (onViewsUpdated) onViewsUpdated(girlId);
+        onViewsUpdated?.(girlId);
       });
     }
   }, [open, girlId]);
 
-  // 🔥 scroll + highlight specific comment if passed
+  // 🔦 scroll to highlighted comment
   useEffect(() => {
     if (highlightCommentId) {
       const el = document.getElementById(`comment-${highlightCommentId}`);
@@ -93,45 +96,76 @@ export default function GirlModal({
     }
   }, [comments, highlightCommentId]);
 
+  // 🧠 optimistic comment submit
   const handleSubmitComment = async () => {
+    if (!comment.trim() && !rating) return;
+
+    const tempId = Date.now();
+    const newComment: Comment = {
+      id: tempId,
+      rating,
+      comment,
+      created_at: new Date().toISOString(),
+      parent_id: null,
+    };
+
+    // optimistic UI
+    setComments((prev) => [...prev, newComment]);
+    setCommentsCount((c) => c + 1);
+
+    const allRatings = [
+      ...comments.map((c) => c.rating).filter((r): r is number => !!r),
+      rating || 0,
+    ];
+    const newAvg =
+      allRatings.length > 0
+        ? allRatings.reduce((a, b) => a + b, 0) / allRatings.length
+        : avgRating;
+    setAvgRating(newAvg);
+
+    setComment("");
+    setRating(null);
+    setSnackbarOpen(true);
+
     try {
-      await axios.post(`${API_BASE}/api/threads/${girlId}/comments`, {
+      await axios.post(`${API_BASE}/api/roasts/${girlId}/replies`, {
         rating: rating && rating > 0 ? rating : null,
         comment: comment?.trim() || null,
       });
-
-      setComment("");
-      setRating(null);
-
-      const res = await axios.get(`${API_BASE}/api/threads/${girlId}/comments`);
-      setComments(res.data.comments);
-      setCommentsCount(res.data.commentsCount);
-      setAvgRating(res.data.avgRating);
-
-      if (onCommentsUpdated) onCommentsUpdated(girlId);
-      setSnackbarOpen(true);
+      onCommentsUpdated?.(girlId, {
+        commentsCount: commentsCount + 1,
+        avgRating: newAvg,
+      });
     } catch (err) {
-      console.error("add comment error", err);
+      console.error("Error adding comment:", err);
     }
   };
 
+  // 🧠 optimistic reply submit
   const handleSubmitReply = async (parentId: number) => {
+    if (!replyText.trim()) return;
+    const tempId = Date.now();
+    const newReply: Comment = {
+      id: tempId,
+      rating: null,
+      comment: replyText.trim(),
+      created_at: new Date().toISOString(),
+      parent_id: parentId,
+    };
+
+    setComments((prev) => [...prev, newReply]);
+    setCommentsCount((c) => c + 1);
+    setReplyText("");
+    setReplyTo(null);
+
     try {
-      await axios.post(`${API_BASE}/api/threads/${girlId}/comments`, {
-        comment: replyText,
+      await axios.post(`${API_BASE}/api/roasts/${girlId}/replies`, {
+        comment: replyText?.trim() || null,
         parent_id: parentId,
       });
-      setReplyText("");
-      setReplyTo(null);
-
-      const res = await axios.get(`${API_BASE}/api/threads/${girlId}/comments`);
-      setComments(res.data.comments);
-      setCommentsCount(res.data.commentsCount);
-      setAvgRating(res.data.avgRating);
-
-      if (onCommentsUpdated) onCommentsUpdated(girlId);
+      onCommentsUpdated?.(girlId, { commentsCount: commentsCount + 1 });
     } catch (err) {
-      console.error("add reply error", err);
+      console.error("Error posting reply:", err);
     }
   };
 
@@ -150,12 +184,21 @@ export default function GirlModal({
     <>
       <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
         <DialogTitle>
-          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 2 }}>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              gap: 2,
+            }}
+          >
             <Typography variant="h6">{girlName || "Unknown"}</Typography>
             <Box sx={{ display: "flex", gap: 2 }}>
               <Typography variant="caption">👀 {views}</Typography>
               <Typography variant="caption">💬 {commentsCount}</Typography>
-              <Typography variant="caption">⭐️ {Number(avgRating).toFixed(1)}</Typography>
+              <Typography variant="caption">
+                ⭐️ {avgRating.toFixed(1)}
+              </Typography>
             </Box>
             <Link href={profileUrl} target="_blank" rel="noreferrer">
               Visit Profile
@@ -164,75 +207,82 @@ export default function GirlModal({
         </DialogTitle>
 
         <DialogContent dividers>
-          {/* Comments */}
-          <Box sx={{ mb: 2 }}>
-            <Typography variant="subtitle1">Comments</Typography>
+          <Typography variant="subtitle1">Comments</Typography>
+          <Stack spacing={2} sx={{ mt: 1 }}>
             {topLevel.length === 0 ? (
               <Typography variant="body2" color="text.secondary">
                 No comments yet.
               </Typography>
             ) : (
-              <Stack spacing={2} sx={{ mt: 1 }}>
-                {topLevel.map((c) => (
-                  <Box key={c.id} id={`comment-${c.id}`} sx={{ mb: 1 }}>
-                    {c.rating !== null && c.rating !== undefined && (
-  <Typography variant="body2">
-    ⭐️ {Number(c.rating).toFixed(1)}
-  </Typography>
-)}
-                    <Typography variant="body2">{c.comment}</Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {new Date(c.created_at).toLocaleString()}
+              topLevel.map((c) => (
+                <Box key={c.id} id={`comment-${c.id}`}>
+                  {c.rating && (
+                    <Typography variant="body2">
+                      ⭐️ {Number(c.rating).toFixed(1)}
                     </Typography>
-                    <Button size="small" onClick={() => setReplyTo(c.id)}>
-                      Reply
-                    </Button>
-                    {repliesMap[c.id]?.map((reply) => (
-                      <Box key={reply.id} id={`comment-${reply.id}`} sx={{ ml: 4, mt: 1, p: 1, bgcolor: "#f9f9f9", borderRadius: 1 }}>
-                        <Typography variant="body2">{reply.comment}</Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {new Date(reply.created_at).toLocaleString()}
-                        </Typography>
-                      </Box>
-                    ))}
-                    {replyTo === c.id && (
-                      <Stack spacing={1} sx={{ mt: 1, ml: 4 }}>
-                        <TextField
-                          label="Write a reply"
-                          multiline
-                          rows={2}
-                          value={replyText}
-                          onChange={(e) => setReplyText(e.target.value)}
-                          fullWidth
-                        />
-                        <Button
-                          variant="outlined"
-                          size="small"
-                          onClick={() => handleSubmitReply(c.id)}
-                          disabled={!replyText.trim()}
-                        >
-                          Post Reply
-                        </Button>
-                      </Stack>
-                    )}
-                  </Box>
-                ))}
-              </Stack>
+                  )}
+                  <Typography variant="body2">{c.comment}</Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {new Date(c.created_at).toLocaleString()}
+                  </Typography>
+                  <Button size="small" onClick={() => setReplyTo(c.id)}>
+                    Reply
+                  </Button>
+                  {repliesMap[c.id]?.map((r) => (
+                    <Box
+                      key={r.id}
+                      sx={{
+                        ml: 4,
+                        mt: 1,
+                        p: 1,
+                        bgcolor: "#f9f9f9",
+                        borderRadius: 1,
+                      }}
+                    >
+                      <Typography variant="body2">{r.comment}</Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {new Date(r.created_at).toLocaleString()}
+                      </Typography>
+                    </Box>
+                  ))}
+                  {replyTo === c.id && (
+                    <Stack spacing={1} sx={{ mt: 1, ml: 4 }}>
+                      <TextField
+                        label="Write a reply"
+                        multiline
+                        rows={2}
+                        value={replyText}
+                        onChange={(e) => setReplyText(e.target.value)}
+                      />
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        onClick={() => handleSubmitReply(c.id)}
+                        disabled={!replyText.trim()}
+                      >
+                        Post Reply
+                      </Button>
+                    </Stack>
+                  )}
+                </Box>
+              ))
             )}
-          </Box>
+          </Stack>
 
-          {/* Add new comment */}
-          <Box>
+          <Box sx={{ mt: 3 }}>
             <Typography variant="subtitle1">Leave a Comment</Typography>
             <Stack spacing={2} sx={{ mt: 1 }}>
-              <Rating value={rating} onChange={(_, val) => setRating(val)} precision={0.5} />
+              <Rating
+                value={rating}
+                onChange={(_, val) => setRating(val)}
+                precision={0.5}
+              />
               <TextField
                 label="Your comment"
                 multiline
                 rows={3}
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
-                fullWidth
               />
               <Button
                 variant="contained"
