@@ -8,7 +8,6 @@ import cors from "cors";
 // route modules
 import authRoutes from "./routes/auth";
 import blogRoutes from "./routes/blog";
-import commentsRoutes from "./routes/comments";
 import contactRoutes from "./routes/contact";
 import rosterRoutes from "./routes/roster";
 import shopsRoutes from "./routes/shops";
@@ -16,6 +15,8 @@ import statsRoutes from "./routes/stats";
 import visitsRoutes from "./routes/visits";
 import viewsRoutes from "./routes/views";
 import threadRoutes from "./routes/threads";
+import cookieParser from "cookie-parser";
+import ensureAnonId from "./middleware/anonId";
 
 
 console.log("DB URL:", process.env.DATABASE_URL);
@@ -38,13 +39,14 @@ app.use(
 // global middlewares
 app.use(express.json({ limit: "200kb" }));
 app.use(securityMiddleware);
+app.use(cookieParser());
+app.use(ensureAnonId);
 
 // base limiter for all /api routes
 app.use("/api", makeLimiter());
 
 // public + spam-prone → extra tight
 app.use("/api/views", tightLimiter, viewsRoutes);
-app.use("/api/comments", tightLimiter, commentsRoutes);
 app.use("/api/contact", tightLimiter, contactRoutes);
 app.use("/api/threads", threadRoutes);
 // public read endpoints → base limiter is enough

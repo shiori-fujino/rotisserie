@@ -1,4 +1,3 @@
-// src/pages/HomePage.tsx
 import { useMemo, useState } from "react";
 import {
   Container,
@@ -17,8 +16,6 @@ import Layout from "../components/Layout";
 import type { RosterItem } from "../types";
 import Midnight from "./Midnight";
 import ErrorDbPulling from "./ErrorDbPulling";
-
-
 
 function shuffleArray<T>(array: T[]): T[] {
   return array
@@ -64,20 +61,19 @@ export default function HomePage() {
   );
 
   const origins = useMemo(() => {
-  const uniq = Array.from(
-    new Set(
-      shuffled
-        .map((d) => d.origin)
-        .filter((o): o is string => Boolean(o)) // ✅ removes undefined
-    )
-  );
-  return uniq.sort((a, b) => {
-    if (a === "Others") return 1;
-    if (b === "Others") return -1;
-    return (a ?? "").localeCompare(b ?? "");
-  });
-}, [shuffled]);
-
+    const uniq = Array.from(
+      new Set(
+        shuffled
+          .map((d) => d.origin)
+          .filter((o): o is string => Boolean(o)) // ✅ removes undefined
+      )
+    );
+    return uniq.sort((a, b) => {
+      if (a === "Others") return 1;
+      if (b === "Others") return -1;
+      return (a ?? "").localeCompare(b ?? "");
+    });
+  }, [shuffled]);
 
   const filtered = useMemo(() => {
     let out = shuffled;
@@ -98,21 +94,32 @@ export default function HomePage() {
   const handleViewsUpdated = (girlId: number) => {
     setShuffled((prev) =>
       prev.map((item) =>
-        item.id === girlId
-          ? { ...item, views: (item.views || 0) + 1 }
-          : item
+        item.id === girlId ? { ...item, views: (item.views || 0) + 1 } : item
       )
     );
   };
 
-  const handleCommentsUpdated = (girlId: number) => {
-    setShuffled((prev) =>
-      prev.map((item) =>
-        item.id === girlId
-          ? { ...item, commentsCount: (item.commentsCount || 0) + 1 }
-          : item
-      )
-    );
+  const handleCommentsUpdated = async (girlId: number) => {
+    try {
+      // 🔥 fetch fresh metadata for this girl
+      const res = await fetch(`/api/threads/${girlId}/comments`);
+      if (!res.ok) return;
+      const json = await res.json();
+
+      setShuffled((prev) =>
+        prev.map((item) =>
+          item.id === girlId
+            ? {
+                ...item,
+                commentsCount: json.commentsCount,
+                avgRating: json.avgRating,
+              }
+            : item
+        )
+      );
+    } catch (err) {
+      console.error("refresh avgRating error", err);
+    }
   };
 
   return (
@@ -147,24 +154,28 @@ export default function HomePage() {
             layout={filters.layout}
             onSelect={setSelectedGirl}
           />
-{!loading && filtered.length > 0 && !filters.shop && !filters.origin && !filters.sort && (
-  <Box sx={{ textAlign: "center", mt: 4, mb: 2 }}>
-    <Typography variant="body2" sx={{ mb: 2 }}>
-      You saw all the girls I scraped for today… <br />
-      The universe is telling you to not have sex today 🥺 <br />
-      or…
-    </Typography>
-    <Button
-      variant="contained"
-      color="error"
-      onClick={handleShuffle}
-      sx={{ borderRadius: 2, px: 3 }}
-    >
-      👉🏻 Re-shuffle
-    </Button>
-  </Box>
-)}
 
+          {!loading &&
+            filtered.length > 0 &&
+            !filters.shop &&
+            !filters.origin &&
+            !filters.sort && (
+              <Box sx={{ textAlign: "center", mt: 4, mb: 2 }}>
+                <Typography variant="body2" sx={{ mb: 2 }}>
+                  You saw all the girls I scraped for today… <br />
+                  The universe is telling you to not have sex today 🥺 <br />
+                  or…
+                </Typography>
+                <Button
+                  variant="contained"
+                  color="error"
+                  onClick={handleShuffle}
+                  sx={{ borderRadius: 2, px: 3 }}
+                >
+                  👉🏻 Re-shuffle
+                </Button>
+              </Box>
+            )}
 
           {selectedGirl && (
             <GirlModal

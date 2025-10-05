@@ -1,4 +1,3 @@
-// src/components/GirlModal.tsx
 import { useEffect, useState } from "react";
 import axios from "axios";
 import {
@@ -27,7 +26,7 @@ interface GirlModalProps {
   profileUrl: string;
   onViewsUpdated?: (girlId: number) => void;
   onCommentsUpdated?: (girlId: number) => void;
-  highlightCommentId?: number; // 👈 NEW
+  highlightCommentId?: number;
 }
 
 interface Comment {
@@ -51,6 +50,7 @@ export default function GirlModal({
   const [comments, setComments] = useState<Comment[]>([]);
   const [views, setViews] = useState(0);
   const [commentsCount, setCommentsCount] = useState(0);
+  const [avgRating, setAvgRating] = useState(0);
 
   const [rating, setRating] = useState<number | null>(0);
   const [comment, setComment] = useState("");
@@ -63,10 +63,10 @@ export default function GirlModal({
   // 🔥 load counts + comments when modal opens
   useEffect(() => {
     if (open && girlId) {
-      axios.get(`${API_BASE}/api/views/${girlId}`).then((res) => setViews(res.data.views));
-      axios.get(`${API_BASE}/api/comments/${girlId}`).then((res) => {
-        setComments(res.data);
-        setCommentsCount(res.data.length);
+      axios.get(`${API_BASE}/api/threads/${girlId}/comments`).then((res) => {
+        setComments(res.data.comments);
+        setCommentsCount(res.data.commentsCount);
+        setAvgRating(res.data.avgRating);
       });
     }
   }, [open, girlId]);
@@ -93,10 +93,9 @@ export default function GirlModal({
     }
   }, [comments, highlightCommentId]);
 
-  // 🔥 submit new top-level comment
   const handleSubmitComment = async () => {
     try {
-      await axios.post(`${API_BASE}/api/comments/${girlId}`, {
+      await axios.post(`${API_BASE}/api/threads/${girlId}/comments`, {
         rating: rating && rating > 0 ? rating : null,
         comment: comment?.trim() || null,
       });
@@ -104,9 +103,10 @@ export default function GirlModal({
       setComment("");
       setRating(null);
 
-      const res = await axios.get(`${API_BASE}/api/comments/${girlId}`);
-      setComments(res.data);
-      setCommentsCount(res.data.length);
+      const res = await axios.get(`${API_BASE}/api/threads/${girlId}/comments`);
+      setComments(res.data.comments);
+      setCommentsCount(res.data.commentsCount);
+      setAvgRating(res.data.avgRating);
 
       if (onCommentsUpdated) onCommentsUpdated(girlId);
       setSnackbarOpen(true);
@@ -115,19 +115,19 @@ export default function GirlModal({
     }
   };
 
-  // 🔥 submit reply
   const handleSubmitReply = async (parentId: number) => {
     try {
-      await axios.post(`${API_BASE}/api/comments/${girlId}`, {
+      await axios.post(`${API_BASE}/api/threads/${girlId}/comments`, {
         comment: replyText,
         parent_id: parentId,
       });
       setReplyText("");
       setReplyTo(null);
 
-      const res = await axios.get(`${API_BASE}/api/comments/${girlId}`);
-      setComments(res.data);
-      setCommentsCount(res.data.length);
+      const res = await axios.get(`${API_BASE}/api/threads/${girlId}/comments`);
+      setComments(res.data.comments);
+      setCommentsCount(res.data.commentsCount);
+      setAvgRating(res.data.avgRating);
 
       if (onCommentsUpdated) onCommentsUpdated(girlId);
     } catch (err) {
@@ -135,7 +135,6 @@ export default function GirlModal({
     }
   };
 
-  // 🔥 group comments
   const topLevel = comments.filter((c) => !c.parent_id);
   const repliesMap = comments.reduce((acc, c) => {
     if (c.parent_id) {
@@ -151,11 +150,12 @@ export default function GirlModal({
     <>
       <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
         <DialogTitle>
-          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 2 }}>
             <Typography variant="h6">{girlName || "Unknown"}</Typography>
             <Box sx={{ display: "flex", gap: 2 }}>
               <Typography variant="caption">👀 {views}</Typography>
               <Typography variant="caption">💬 {commentsCount}</Typography>
+              <Typography variant="caption">⭐️ {Number(avgRating).toFixed(1)}</Typography>
             </Box>
             <Link href={profileUrl} target="_blank" rel="noreferrer">
               Visit Profile
@@ -175,31 +175,26 @@ export default function GirlModal({
               <Stack spacing={2} sx={{ mt: 1 }}>
                 {topLevel.map((c) => (
                   <Box key={c.id} id={`comment-${c.id}`} sx={{ mb: 1 }}>
-                    {c.rating && <Rating value={c.rating} readOnly size="small" />}
+                    {c.rating !== null && c.rating !== undefined && (
+  <Typography variant="body2">
+    ⭐️ {Number(c.rating).toFixed(1)}
+  </Typography>
+)}
                     <Typography variant="body2">{c.comment}</Typography>
                     <Typography variant="caption" color="text.secondary">
                       {new Date(c.created_at).toLocaleString()}
                     </Typography>
-
                     <Button size="small" onClick={() => setReplyTo(c.id)}>
                       Reply
                     </Button>
-
-                    {/* Replies */}
                     {repliesMap[c.id]?.map((reply) => (
-                      <Box
-                        key={reply.id}
-                        id={`comment-${reply.id}`}
-                        sx={{ ml: 4, mt: 1, p: 1, bgcolor: "#f9f9f9", borderRadius: 1 }}
-                      >
+                      <Box key={reply.id} id={`comment-${reply.id}`} sx={{ ml: 4, mt: 1, p: 1, bgcolor: "#f9f9f9", borderRadius: 1 }}>
                         <Typography variant="body2">{reply.comment}</Typography>
                         <Typography variant="caption" color="text.secondary">
                           {new Date(reply.created_at).toLocaleString()}
                         </Typography>
                       </Box>
                     ))}
-
-                    {/* Reply input */}
                     {replyTo === c.id && (
                       <Stack spacing={1} sx={{ mt: 1, ml: 4 }}>
                         <TextField
@@ -230,7 +225,7 @@ export default function GirlModal({
           <Box>
             <Typography variant="subtitle1">Leave a Comment</Typography>
             <Stack spacing={2} sx={{ mt: 1 }}>
-              <Rating value={rating} onChange={(_, val) => setRating(val)} />
+              <Rating value={rating} onChange={(_, val) => setRating(val)} precision={0.5} />
               <TextField
                 label="Your comment"
                 multiline
@@ -255,7 +250,6 @@ export default function GirlModal({
         </DialogActions>
       </Dialog>
 
-      {/* 🔔 Snackbar */}
       <Snackbar
         open={snackbarOpen}
         autoHideDuration={3000}

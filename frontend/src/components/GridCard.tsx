@@ -1,4 +1,3 @@
-// GridCard.tsx
 import { useState } from "react";
 import {
   Card,
@@ -8,8 +7,6 @@ import {
   Box,
   Stack,
 } from "@mui/material";
-import VisibilityIcon from "@mui/icons-material/Visibility";
-import RateReviewIcon from "@mui/icons-material/RateReview";
 import type { RosterItem } from "../types";
 
 export default function GridCard({
@@ -27,7 +24,7 @@ export default function GridCard({
         borderRadius: 2,
         overflow: "hidden",
         cursor: "pointer",
-        position: "relative", // ✅ so overlay positions correctly
+        position: "relative",
       }}
       onClick={() => onSelect(item)}
     >
@@ -43,7 +40,6 @@ export default function GridCard({
         }}
       />
 
-      {/* 🔥 Overlay if fallback triggered OR no photo provided */}
       {(!item.photo || isFallback) && (
         <Box
           sx={{
@@ -52,40 +48,22 @@ export default function GridCard({
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            bgcolor: "rgba(0,0,0,0.6)", // dimmed mask
+            bgcolor: "rgba(0,0,0,0.6)",
             color: "white",
             textAlign: "center",
             px: 1,
             zIndex: 2,
           }}
         >
-          <Typography variant="caption">
-            I couldn’t scrape a proper image URL ☠️
-          </Typography>
+          <Typography variant="caption">I couldn’t scrape a proper image URL ☠️</Typography>
         </Box>
       )}
 
-      <CardContent
-        sx={{
-          display: "flex",
-          p: 1,
-          "&:last-child": { pb: 1 },
-        }}
-      >
-        <Stack
-          direction="row"
-          spacing={2}
-          alignItems="center"
-          sx={{ flex: 1, justifyContent: "space-between" }}
-        >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-            <VisibilityIcon fontSize="small" />
-            <Typography variant="caption">{item.views ?? 0}</Typography>
-          </Box>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-            <RateReviewIcon fontSize="small" />
-            <Typography variant="caption">{item.commentsCount ?? 0}</Typography>
-          </Box>
+      <CardContent sx={{ display: "flex", p: 1, "&:last-child": { pb: 1 } }}>
+        <Stack direction="row" spacing={2} alignItems="center" sx={{ flex: 1 }}>
+          <Typography variant="caption">👀 {item.views ?? 0}</Typography>
+          <Typography variant="caption">💬 {item.commentsCount ?? 0}</Typography>
+          <Typography variant="caption">⭐️ {item.avgRating?.toFixed(1) ?? "0.0"}</Typography>
         </Stack>
       </CardContent>
     </Card>

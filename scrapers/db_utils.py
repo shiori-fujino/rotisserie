@@ -7,10 +7,15 @@ from dotenv import load_dotenv
 AUS_TZ = "Australia/Sydney"
 load_dotenv()
 
+# Load .env only if it exists (local dev)
+dotenv_path = os.path.join(os.path.dirname(__file__), ".env")
+if os.path.exists(dotenv_path):
+    load_dotenv(dotenv_path)
+    
 def get_conn():
     dsn = os.getenv("DATABASE_URL")
     if not dsn:
-        raise RuntimeError("DATABASE_URL not set")
+        raise RuntimeError("DATABASE_URL not set (check .env locally or GitHub Actions secrets)")
     return psycopg2.connect(dsn, sslmode="require")
 
 # ---------- schema ----------

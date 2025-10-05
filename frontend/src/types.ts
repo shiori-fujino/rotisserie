@@ -16,6 +16,7 @@ export interface RosterItem {
   views?: number;
   commentsCount?: number;
   reviewsCount?: number;
+  avgRating?: number;
 }
 
 

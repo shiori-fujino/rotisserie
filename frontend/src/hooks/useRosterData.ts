@@ -1,58 +1,47 @@
-//frontend/srv/hooks/useRosterData.ts
-
 import { useEffect, useState } from "react";
 import type { RosterItem } from "../types";
-import { API_BASE } from "../config";   // ✅ use config.ts
+import { API_BASE } from "../config";
 
 export default function useRosterData() {
   const [data, setData] = useState<RosterItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    let ignore = false;
+  async function fetchData() {
+    try {
+      const res = await fetch(`${API_BASE}/api/roster/today`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = await res.json();
 
-    async function fetchData() {
-      try {
-        setLoading(true);
-        const res = await fetch(`${API_BASE}/api/roster/today`);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const json = await res.json();
-
-        // flatten shops → roster items
-        const items: RosterItem[] = [];
-        for (const shop of json.shops) {
-          for (const g of shop.girls) {
-            items.push({
-              id: g.id,
-              name: g.name,
-              origin: g.origin,
-              shop: shop.name,
-              profileUrl: g.profileUrl,
-              photo: g.photoUrl,
-              views: g.views,
-              reviewsCount: g.reviewsCount,
-              commentsCount: g.commentsCount,
-            });
-          }
+      const items: RosterItem[] = [];
+      for (const shop of json.shops) {
+        for (const g of shop.girls) {
+          items.push({
+            id: g.id,
+            name: g.name,
+            origin: g.origin,
+            shop: shop.name,
+            profileUrl: g.profileUrl,
+            photo: g.photoUrl,
+            shift: g.shift || "",
+            views: g.views ?? 0,
+            commentsCount: g.commentsCount ?? 0,
+            avgRating: g.avgRating ?? 0,
+          });
         }
-
-        if (!ignore) {
-          setData(items);
-          setError(null);
-        }
-      } catch (err: any) {
-        if (!ignore) setError(err.message || "Failed to load data");
-      } finally {
-        if (!ignore) setLoading(false);
       }
+      setData(items);
+      setError(null);
+    } catch (err: any) {
+      setError(err.message || "Failed to load data");
+    } finally {
+      setLoading(false);
     }
+  }
 
-    fetchData();
-    return () => {
-      ignore = true;
-    };
+  useEffect(() => {
+    fetchData(); // ✅ load only once
   }, []);
 
-  return { data, setData, loading, error };
+  return { data, loading, error, refetch: fetchData };
 }
