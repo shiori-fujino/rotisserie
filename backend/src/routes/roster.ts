@@ -33,23 +33,23 @@ router.get("/today", async (_req, res) => {
     r.shift_text,
     COALESCE(v.count, 0) AS views,
 
-    -- ✅ comments = text-only; avg rating computed in DB
-    COALESCE(c.comment_count, 0) AS comments_count,
+    -- ✅ replies = text-only; avg rating computed in DB
+    COALESCE(c.replies_count, 0) AS replies_count,
     c.avg_rating AS avg_rating
 
   FROM roster_entries r
   JOIN girls g ON g.id = r.girl_id
   JOIN shops s ON s.id = r.shop_id
   LEFT JOIN girl_views v ON v.girl_id = g.id
-  LEFT JOIN threads t ON t.girl_id = g.id
   LEFT JOIN (
-    SELECT 
-      thread_id,
-      COUNT(*) FILTER (WHERE comment IS NOT NULL AND LENGTH(TRIM(comment)) > 0) AS comment_count,
-      AVG(rating)::numeric(10,2) AS avg_rating
-    FROM comments
-    GROUP BY thread_id
-  ) c ON c.thread_id = t.id
+  SELECT
+    r.girl_id,
+    COUNT(rep.id) AS replies_count,
+    ROUND(AVG(rep.rating)::numeric, 1) AS avg_rating
+  FROM roasts r
+  LEFT JOIN replies rep ON rep.roast_id = r.id
+  GROUP BY r.girl_id
+) c ON c.girl_id = g.id
   WHERE r.date = (SELECT d FROM today)
   ORDER BY s.name, COALESCE(g.name, '') ASC;
   `;
@@ -72,7 +72,7 @@ router.get("/today", async (_req, res) => {
         profileUrl: row.profile_url,
         photoUrl: row.photo_url,
         views: Number(row.views) || 0,
-        commentsCount: Number(row.comments_count) || 0,
+        repliesCount: Number(row.replies_count) || 0,
         avgRating: row.avg_rating !== null ? Number(row.avg_rating) : null,
       });
     }

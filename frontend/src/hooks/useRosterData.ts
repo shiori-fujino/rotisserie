@@ -25,7 +25,7 @@ export default function useRosterData() {
             photo: g.photoUrl,
             shift: g.shift || "",
             views: g.views ?? 0,
-            commentsCount: g.commentsCount ?? 0,
+            repliesCount: g.repliesCount ?? 0,
             avgRating: g.avgRating ?? 0,
           });
         }

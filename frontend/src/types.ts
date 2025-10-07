@@ -14,8 +14,7 @@ export interface RosterItem {
   photos?: string[];
 
   views?: number;
-  commentsCount?: number;
-  reviewsCount?: number;
+  repliesCount?: number;
   avgRating?: number;
 }
 

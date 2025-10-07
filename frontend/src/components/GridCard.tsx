@@ -62,9 +62,14 @@ export default function GridCard({
       )}
 
       <CardContent sx={{ display: "flex", p: 1, "&:last-child": { pb: 1 } }}>
-        <Stack direction="row" spacing={2} alignItems="center" sx={{ flex: 1 }}>
+        <Stack
+    direction="row"
+    alignItems="center"
+    justifyContent="space-between" // 💥 evenly spaced
+    sx={{ flex: 1 }}
+  >
           <Typography variant="caption">👀 {item.views ?? 0}</Typography>
-          <Typography variant="caption">💬 {item.commentsCount ?? 0}</Typography>
+          <Typography variant="caption">💬 {item.repliesCount ?? 0}</Typography>
           <Typography variant="caption">⭐️ {item.avgRating?.toFixed(1) ?? "0.0"}</Typography>
         </Stack>
       </CardContent>

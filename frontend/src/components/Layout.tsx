@@ -1,5 +1,6 @@
 import {
   AppBar,
+  Stack,
   Toolbar,
   Typography,
   Box,
@@ -26,42 +27,92 @@ export default function Layout({
         flexDirection: "column",
       }}
     >
-      {/* Top Nav */}
-      <AppBar position="sticky" color="inherit" elevation={1}>
-        <Toolbar>
-          {/* Dynamic date/time roster */}
-          <Typography
-            variant="h6"
-            sx={{ fontWeight: 700, textDecoration: "none", color: "inherit" }}
-            onClick={() => (window.location.href = "/")}
-          >
-            {new Date().toLocaleString("en-AU", {
-              weekday: "short",
-              day: "numeric",
-              month: "short",
-            })}{" "}
-            🐓
-          </Typography>
+{/* Top Nav — German Engineering Edition */}
+<AppBar
+  position="sticky"
+  color="transparent"
+  elevation={0}
+  sx={{
+    backdropFilter: "blur(6px)",
+    borderBottom: "1px solid rgba(0,0,0,0.08)",
+    bgcolor: "rgba(255,255,255,0.75)",
+  }}
+>
+  <Toolbar
+    sx={{
+      display: "flex",
+      justifyContent: "space-between", // 🔥 key difference
+      alignItems: "center",
+      px: { xs: 1.5, sm: 3 },
+    }}
+  >
+    {/* Left: Home / Date */}
+    <Typography
+      variant="h6"
+      onClick={() => (window.location.href = "/")}
+      sx={{
+        fontWeight: 700,
+        fontFamily: "Inter, Roboto, sans-serif",
+        color: "text.primary",
+        cursor: "pointer",
+        "&:hover": { color: "#e65100" },
+        flexShrink: 0, // stops shrinking on mobile
+      }}
+    >
+      {new Date().toLocaleString("en-AU", {
+        weekday: "short",
+        day: "numeric",
+        month: "long",
+      })}{" "}
+      🐓
+    </Typography>
 
-          {/* Spacer */}
-          <Box sx={{ flex: 1 }} />
+    {/* Right: Menu items */}
+    <Box
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        gap: { xs: 1, sm: 2 },
+        flexShrink: 0,
+      }}
+    >
+      <Button
+        color="inherit"
+        component={Link}
+        to="/about"
+        sx={{ textTransform: "none", fontWeight: 500 }}
+      >
+        About
+      </Button>
+      <Button
+        color="inherit"
+        component={Link}
+        to="/help"
+        sx={{ textTransform: "none", fontWeight: 500 }}
+      >
+        Help
+      </Button>
+      <Button
+        color="inherit"
+        component={Link}
+        to="/roast"
+        sx={{
+          textTransform: "none",
+          fontWeight: 600,
+          color: "#e65100",
+        }}
+      >
+        Roasting...
+      </Button>
 
-          {/* Menu buttons */}
-          <Button color="inherit" component={Link} to="/help">
-            Help
-          </Button>
-          <Button color="inherit" component={Link} to="/about">
-            About
-          </Button>
-
-          {/* Shuffle icon */}
-          {onShuffle && (
-            <IconButton onClick={onShuffle}>
-              <RefreshIcon />
-            </IconButton>
-          )}
-        </Toolbar>
-      </AppBar>
+      {onShuffle && (
+        <IconButton onClick={onShuffle} sx={{ color: "text.secondary" }}>
+          <RefreshIcon fontSize="small" />
+        </IconButton>
+      )}
+    </Box>
+  </Toolbar>
+</AppBar>
 
       {/* Content area */}
       <Box sx={{ py: 3, px: 1.5, flex: 1 }}>{children}</Box>

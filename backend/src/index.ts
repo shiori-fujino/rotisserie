@@ -14,10 +14,12 @@ import shopsRoutes from "./routes/shops";
 import statsRoutes from "./routes/stats";
 import visitsRoutes from "./routes/visits";
 import viewsRoutes from "./routes/views";
-import threadRoutes from "./routes/threads";
+
 import cookieParser from "cookie-parser";
 import ensureAnonId from "./middleware/anonId";
 import roastsRouter from "./routes/roasts";
+import repliesRouter from "./routes/replies";
+import girlsRouter from "./routes/girls";
 
 
 console.log("DB URL:", process.env.DATABASE_URL);
@@ -49,8 +51,9 @@ app.use("/api", makeLimiter());
 // public + spam-prone → extra tight
 app.use("/api/views", tightLimiter, viewsRoutes);
 app.use("/api/contact", tightLimiter, contactRoutes);
-app.use("/api/threads", threadRoutes);
 app.use("/api/roasts", roastsRouter);
+app.use("/api/replies", repliesRouter);
+app.use("/api/girls", girlsRouter);
 
 // public read endpoints → base limiter is enough
 app.use("/api/roster", rosterRoutes);

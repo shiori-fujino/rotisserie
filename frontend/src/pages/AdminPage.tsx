@@ -1,4 +1,3 @@
-// src/pages/AdminPage.tsx
 import { useEffect, useState } from "react";
 import axios from "axios";
 import {
@@ -12,6 +11,7 @@ import {
   CircularProgress,
   Button,
   TextField,
+  Chip,
 } from "@mui/material";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -19,6 +19,9 @@ import { API_BASE } from "../config";
 
 axios.defaults.baseURL = API_BASE;
 
+/* -------------------------------------------------------------------------- */
+/* Types                                                                      */
+/* -------------------------------------------------------------------------- */
 interface ContactMessage {
   id: number;
   message: string;
@@ -32,146 +35,145 @@ interface BlogPost {
   created_at: string;
 }
 
-interface Comment {
+interface Roast {
   id: number;
-  girl_id: number;
-  girl_name: string;
+  title: string;
+  created_at: string;
+  heat: number;
+  category?: string;
+  type: "roast";
+}
+
+interface Reply {
+  id: number;
+  roast_id: number;
   comment: string | null;
   rating: number | null;
   created_at: string;
+  roast_title?: string;
+  type: "reply";
 }
 
+type FeedItem = Roast | Reply;
+
+/* -------------------------------------------------------------------------- */
+/* Admin Page                                                                 */
+/* -------------------------------------------------------------------------- */
 export default function AdminPage() {
   const [tab, setTab] = useState(0);
-
-  // Auth state
   const [token, setToken] = useState<string | null>(
     localStorage.getItem("admin_token")
   );
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
-  // Comments state
-  const [comments, setComments] = useState<Comment[]>([]);
-  const [loadingComments, setLoadingComments] = useState(false);
-
-  // Messages state
+  // state
   const [messages, setMessages] = useState<ContactMessage[]>([]);
   const [loadingMessages, setLoadingMessages] = useState(false);
 
-  // Blog state
+  const [feed, setFeed] = useState<FeedItem[]>([]);
+  const [loadingFeed, setLoadingFeed] = useState(false);
+
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [loadingPosts, setLoadingPosts] = useState(false);
   const [newTitle, setNewTitle] = useState("");
   const [newContent, setNewContent] = useState("");
-
   const [editingPost, setEditingPost] = useState<BlogPost | null>(null);
   const [successMsg, setSuccessMsg] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
 
-  // ----------------- LOGIN -----------------
+  /* ----------------------------- LOGIN LOGIC ------------------------------ */
   const login = async () => {
     try {
       const res = await axios.post("/api/auth/login", { username, password });
       localStorage.setItem("admin_token", res.data.token);
       setToken(res.data.token);
-    } catch (err) {
-      alert("Login failed. Check your credentials.");
+    } catch {
+      alert("Login failed. Check credentials.");
     }
   };
 
-  // ----------------- FETCH CONTACT MESSAGES -----------------
+  /* ---------------------------- FETCH MESSAGES ---------------------------- */
   useEffect(() => {
     if (tab === 0 && token) {
-      const fetchMessages = async () => {
-        setLoadingMessages(true);
-        try {
-          const res = await axios.get<ContactMessage[]>("/api/contact", {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          setMessages(res.data);
-        } catch (err) {
-          console.error("Failed to fetch messages", err);
-          if (axios.isAxiosError(err) && err.response?.status === 401) {
-            localStorage.removeItem("admin_token");
-            setToken(null);
-          }
-        } finally {
-          setLoadingMessages(false);
-        }
-      };
-      fetchMessages();
+      setLoadingMessages(true);
+      axios
+        .get<ContactMessage[]>("/api/contact", {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        .then((res) => setMessages(res.data))
+        .catch((err) => console.error("fetch contact fail", err))
+        .finally(() => setLoadingMessages(false));
     }
   }, [tab, token]);
 
-  // ----------------- FETCH COMMENTS -----------------
+  /* --------------------------- FETCH ROAST FEED --------------------------- */
   useEffect(() => {
     if (tab === 1 && token) {
-      const fetchComments = async () => {
-        setLoadingComments(true);
+      const load = async () => {
+        setLoadingFeed(true);
         try {
-          const res = await axios.get<Comment[]>("/api/comments", {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          setComments(res.data);
+          const [roastsRes, repliesRes] = await Promise.all([
+            axios.get<Omit<Roast, "type">[]>("/api/roasts"),
+            axios.get<Omit<Reply, "type">[]>("/api/replies/all"),
+          ]);
+
+          const roastItems: Roast[] = roastsRes.data.map((r) => ({
+            ...r,
+            type: "roast" as const,
+          }));
+          const replyItems: Reply[] = repliesRes.data.map((r) => ({
+            ...r,
+            type: "reply" as const,
+          }));
+
+          const merged: FeedItem[] = [...roastItems, ...replyItems].sort(
+            (a, b) =>
+              new Date(b.created_at).getTime() -
+              new Date(a.created_at).getTime()
+          );
+
+          setFeed(merged);
         } catch (err) {
-          console.error("Failed to fetch comments", err);
+          console.error("fetch feed fail", err);
         } finally {
-          setLoadingComments(false);
+          setLoadingFeed(false);
         }
       };
-      fetchComments();
+      load();
     }
   }, [tab, token]);
 
-  const deleteComment = async (id: number) => {
-    if (!window.confirm("Delete this comment?")) return;
-    try {
-      await axios.delete(`/api/comments/${id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setComments(comments.filter((c) => c.id !== id));
-    } catch (err) {
-      console.error("Failed to delete comment", err);
-    }
+  const deleteRoast = async (id: number) => {
+    if (!window.confirm("Delete this roast and its replies?")) return;
+    await axios
+      .delete(`/api/roasts/${id}`)
+      .then(() => setFeed((prev) => prev.filter((x) => !(x.type === "roast" && x.id === id))))
+      .catch((err) => console.error("delete roast fail", err));
   };
 
-  const updateComment = async (c: Comment) => {
-    const newText = prompt("Edit comment:", c.comment || "") || c.comment;
-    if (newText === c.comment) return;
-    try {
-      const res = await axios.put<Comment>(
-        `/api/comments/${c.id}`,
-        { comment: newText, rating: c.rating },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      setComments(comments.map((x) => (x.id === c.id ? res.data : x)));
-    } catch (err) {
-      console.error("Failed to update comment", err);
-    }
+  const deleteReply = async (id: number) => {
+    if (!window.confirm("Delete this reply?")) return;
+    await axios
+      .delete(`/api/replies/${id}`)
+      .then(() => setFeed((prev) => prev.filter((x) => !(x.type === "reply" && x.id === id))))
+      .catch((err) => console.error("delete reply fail", err));
   };
 
-  // ----------------- FETCH BLOG POSTS -----------------
+  /* ----------------------------- FETCH BLOG ------------------------------- */
   useEffect(() => {
     if (tab === 2 && token) {
-      const fetchPosts = async () => {
-        setLoadingPosts(true);
-        try {
-          const res = await axios.get<BlogPost[]>("/api/blog", {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          setPosts(res.data);
-        } catch (err) {
-          console.error("Failed to fetch posts", err);
-        } finally {
-          setLoadingPosts(false);
-        }
-      };
-      fetchPosts();
+      setLoadingPosts(true);
+      axios
+        .get<BlogPost[]>("/api/blog", {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        .then((res) => setPosts(res.data))
+        .catch((err) => console.error("fetch blog fail", err))
+        .finally(() => setLoadingPosts(false));
     }
   }, [tab, token]);
 
-  // ----------------- CREATE POST -----------------
   const createPost = async () => {
     try {
       const res = await axios.post<BlogPost>(
@@ -183,50 +185,22 @@ export default function AdminPage() {
       setNewTitle("");
       setNewContent("");
       setSuccessMsg("Post created!");
-    } catch (err) {
-      console.error("Failed to create post", err);
+    } catch {
       setErrorMsg("Failed to create post");
     }
   };
 
-  // ----------------- UPDATE POST -----------------
-  const updatePost = async () => {
-    if (!editingPost) return;
-    try {
-      const res = await axios.put<BlogPost>(
-        `/api/blog/${editingPost.id}`,
-        {
-          title: editingPost.title,
-          content: editingPost.content,
-          created_at: editingPost.created_at,
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      setPosts(posts.map((p) => (p.id === res.data.id ? res.data : p)));
-      setSuccessMsg("Post updated!");
-      setEditingPost(null);
-    } catch (err) {
-      console.error("Failed to update post", err);
-      setErrorMsg("Failed to update post");
-    }
-  };
-
-  // ----------------- DELETE POST -----------------
   const deletePost = async (id: number) => {
     if (!window.confirm("Delete this post?")) return;
-    try {
-      await axios.delete(`/api/blog/${id}`, {
+    await axios
+      .delete(`/api/blog/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
-      });
-      setPosts(posts.filter((p) => p.id !== id));
-      setSuccessMsg("Post deleted!");
-    } catch (err) {
-      console.error("Delete failed", err);
-      setErrorMsg("Failed to delete post");
-    }
+      })
+      .then(() => setPosts((p) => p.filter((x) => x.id !== id)))
+      .catch(() => setErrorMsg("Failed to delete post"));
   };
 
-  // ----------------- LOGIN SCREEN -----------------
+  /* ----------------------------- LOGIN SCREEN ----------------------------- */
   if (!token) {
     return (
       <Box sx={{ maxWidth: 400, mx: "auto", mt: 8 }}>
@@ -253,7 +227,7 @@ export default function AdminPage() {
     );
   }
 
-  // ----------------- ADMIN DASHBOARD -----------------
+  /* ---------------------------- MAIN DASHBOARD ---------------------------- */
   return (
     <Box sx={{ maxWidth: 900, mx: "auto", py: 4 }}>
       <Typography variant="h4" gutterBottom>
@@ -262,9 +236,8 @@ export default function AdminPage() {
 
       <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 3 }}>
         <Tab label="Contact Messages" />
-        <Tab label="Comments" />
+        <Tab label="Roast Feed" />
         <Tab label="Blog Posts" />
-        <Tab label="(Future) Analytics" />
       </Tabs>
 
       {/* CONTACT MESSAGES */}
@@ -274,15 +247,14 @@ export default function AdminPage() {
             Contact Messages
           </Typography>
           {loadingMessages ? (
-            <Box sx={{ textAlign: "center", mt: 4 }}>
+            <Box textAlign="center" mt={4}>
               <CircularProgress />
-              <Typography sx={{ mt: 2 }}>Loading messages…</Typography>
             </Box>
           ) : (
             <Stack spacing={2}>
               {messages.map((msg) => (
                 <Paper key={msg.id} sx={{ p: 2 }}>
-                  <Typography variant="body1">{msg.message}</Typography>
+                  <Typography>{msg.message}</Typography>
                   <Divider sx={{ my: 1 }} />
                   <Typography variant="caption" color="text.secondary">
                     {new Date(msg.created_at).toLocaleString()}
@@ -290,62 +262,87 @@ export default function AdminPage() {
                 </Paper>
               ))}
               {messages.length === 0 && (
-                <Typography variant="body2" color="text.secondary">
-                  No messages yet 🍗
-                </Typography>
+                <Typography>No messages yet 🍗</Typography>
               )}
             </Stack>
           )}
         </Box>
       )}
 
-      {/* COMMENTS */}
+      {/* ROAST FEED */}
       {tab === 1 && (
         <Box>
           <Typography variant="h6" gutterBottom>
-            Comments
+            All Roasts & Replies
           </Typography>
-          {loadingComments ? (
-            <Box sx={{ textAlign: "center", mt: 4 }}>
+          {loadingFeed ? (
+            <Box textAlign="center" mt={4}>
               <CircularProgress />
-              <Typography sx={{ mt: 2 }}>Loading comments…</Typography>
             </Box>
           ) : (
             <Stack spacing={2}>
-              {comments.map((c) => (
-                <Paper key={c.id} sx={{ p: 2 }}>
-                  <Typography variant="subtitle1">
-                    {c.girl_name || "Unknown Girl"}
-                  </Typography>
-                  <Typography variant="body2" sx={{ mb: 1 }}>
-                    {c.comment || "—"}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    {new Date(c.created_at).toLocaleString()} | ⭐{" "}
-                    {c.rating ?? "N/A"}
-                  </Typography>
-                  <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
-                    <Button
-                      size="small"
-                      variant="outlined"
-                      onClick={() => updateComment(c)}
-                    >
-                      Edit
-                    </Button>
-                    <Button
-                      size="small"
-                      color="error"
-                      variant="outlined"
-                      onClick={() => deleteComment(c.id)}
-                    >
-                      Delete
-                    </Button>
+              {feed.map((item) => (
+                <Paper key={`${item.type}-${item.id}`} sx={{ p: 2 }}>
+                  <Stack
+                    direction="row"
+                    alignItems="center"
+                    justifyContent="space-between"
+                  >
+                    <Typography variant="subtitle1">
+                      {item.type === "roast" ? (
+                        <>
+                          <Chip label="Roast" color="warning" size="small" />{" "}
+                          {item.title}
+                        </>
+                      ) : (
+                        <>
+                          <Chip label="Reply" color="info" size="small" />{" "}
+                          {(item as Reply).roast_title || `#${item.roast_id}`}
+                        </>
+                      )}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {new Date(item.created_at).toLocaleString()}
+                    </Typography>
                   </Stack>
+
+                  {item.type === "reply" && (
+                    <>
+                      {(item as Reply).rating && (
+                        <Typography variant="body2">
+                          ⭐ {(item as Reply).rating?.toFixed(1)}
+                        </Typography>
+                      )}
+                      <Typography variant="body2" sx={{ mt: 0.5 }}>
+                        {(item as Reply).comment || "—"}
+                      </Typography>
+                    </>
+                  )}
+
+                  {item.type === "roast" && (
+                    <Typography variant="body2" color="text.secondary">
+                      Heat: 🔥 {(item as Roast).heat}
+                    </Typography>
+                  )}
+
+                  <Divider sx={{ my: 1 }} />
+                  <Button
+                    size="small"
+                    color="error"
+                    variant="outlined"
+                    onClick={() =>
+                      item.type === "roast"
+                        ? deleteRoast(item.id)
+                        : deleteReply(item.id)
+                    }
+                  >
+                    Delete
+                  </Button>
                 </Paper>
               ))}
-              {comments.length === 0 && (
-                <Typography variant="body2" color="text.secondary">
-                  No comments yet 🐓
+              {feed.length === 0 && (
+                <Typography color="text.secondary">
+                  No posts or replies yet 🐔
                 </Typography>
               )}
             </Stack>
@@ -360,106 +357,48 @@ export default function AdminPage() {
             Blog Posts
           </Typography>
 
-          {/* EDIT MODE */}
-          {editingPost ? (
-            <Stack spacing={2} sx={{ mb: 3 }}>
-              <TextField
-                label="Title"
-                value={editingPost.title}
-                onChange={(e) =>
-                  setEditingPost({ ...editingPost, title: e.target.value })
-                }
-              />
-              <TextField
-                label="Date"
-                type="date"
-                value={editingPost.created_at.split("T")[0]}
-                onChange={(e) =>
-                  setEditingPost({
-                    ...editingPost,
-                    created_at: `${e.target.value}T00:00:00Z`,
-                  })
-                }
-              />
-              <TextField
-                label="Content"
-                multiline
-                rows={8}
-                value={editingPost.content}
-                onChange={(e) =>
-                  setEditingPost({ ...editingPost, content: e.target.value })
-                }
-              />
-              <Stack direction="row" spacing={2}>
-                <Button variant="contained" onClick={updatePost}>
-                  Save Changes
-                </Button>
-                <Button
-                  variant="outlined"
-                  color="secondary"
-                  onClick={() => setEditingPost(null)}
-                >
-                  Cancel
-                </Button>
-              </Stack>
-            </Stack>
-          ) : (
-            <>
-              {/* New Post Form */}
-              <Stack spacing={2} sx={{ mb: 3 }}>
-                <TextField
-                  label="Title"
-                  value={newTitle}
-                  onChange={(e) => setNewTitle(e.target.value)}
-                />
-                <TextField
-                  label="Content (Markdown supported)"
-                  multiline
-                  rows={6}
-                  value={newContent}
-                  onChange={(e) => setNewContent(e.target.value)}
-                />
-                <Button
-                  variant="contained"
-                  onClick={createPost}
-                  disabled={!newTitle || !newContent}
-                >
-                  Post
-                </Button>
-              </Stack>
+          <Stack spacing={2} sx={{ mb: 3 }}>
+            <TextField
+              label="Title"
+              value={newTitle}
+              onChange={(e) => setNewTitle(e.target.value)}
+            />
+            <TextField
+              label="Content (Markdown supported)"
+              multiline
+              rows={6}
+              value={newContent}
+              onChange={(e) => setNewContent(e.target.value)}
+            />
+            <Button
+              variant="contained"
+              onClick={createPost}
+              disabled={!newTitle || !newContent}
+            >
+              Post
+            </Button>
+          </Stack>
 
-              {/* Markdown Preview */}
-              {newContent && (
-                <Paper sx={{ p: 2, mb: 3 }}>
-                  <Typography variant="subtitle1" gutterBottom>
-                    Preview
-                  </Typography>
-                  <Divider sx={{ mb: 2 }} />
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                    {newContent}
-                  </ReactMarkdown>
-                </Paper>
-              )}
-            </>
+          {newContent && (
+            <Paper sx={{ p: 2, mb: 3 }}>
+              <Typography variant="subtitle1">Preview</Typography>
+              <Divider sx={{ mb: 2 }} />
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {newContent}
+              </ReactMarkdown>
+            </Paper>
           )}
 
-          {/* Success/Error Messages */}
           {successMsg && (
-            <Typography color="success.main" sx={{ mb: 2 }}>
-              {successMsg}
-            </Typography>
+            <Typography color="success.main">{successMsg}</Typography>
           )}
           {errorMsg && (
-            <Typography color="error.main" sx={{ mb: 2 }}>
-              {errorMsg}
-            </Typography>
+            <Typography color="error.main">{errorMsg}</Typography>
           )}
 
-          {/* Posts List */}
           {loadingPosts ? (
-            <Box sx={{ textAlign: "center", mt: 4 }}>
+            <Box textAlign="center" mt={4}>
               <CircularProgress />
-              <Typography sx={{ mt: 2 }}>Loading posts…</Typography>
             </Box>
           ) : (
             <Stack spacing={2}>
@@ -470,46 +409,22 @@ export default function AdminPage() {
                   <ReactMarkdown remarkPlugins={[remarkGfm]}>
                     {p.content}
                   </ReactMarkdown>
-                  <Typography
-                    variant="caption"
-                    color="text.secondary"
-                    sx={{ display: "block", mt: 1 }}
-                  >
+                  <Typography variant="caption" color="text.secondary">
                     {new Date(p.created_at).toLocaleString()}
                   </Typography>
-                  <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
-                    <Button
-                      size="small"
-                      onClick={() => setEditingPost(p)}
-                      variant="outlined"
-                    >
-                      Edit
-                    </Button>
-                    <Button
-                      size="small"
-                      color="error"
-                      variant="outlined"
-                      onClick={() => deletePost(p.id)}
-                    >
-                      Delete
-                    </Button>
-                  </Stack>
+                  <Button
+                    size="small"
+                    color="error"
+                    variant="outlined"
+                    onClick={() => deletePost(p.id)}
+                    sx={{ mt: 1 }}
+                  >
+                    Delete
+                  </Button>
                 </Paper>
               ))}
-              {posts.length === 0 && (
-                <Typography variant="body2" color="text.secondary">
-                  No posts yet 🐓
-                </Typography>
-              )}
             </Stack>
           )}
-        </Box>
-      )}
-
-      {/* ANALYTICS (FUTURE) */}
-      {tab === 3 && (
-        <Box>
-          <Typography variant="h6">Analytics (coming soon…)</Typography>
         </Box>
       )}
     </Box>

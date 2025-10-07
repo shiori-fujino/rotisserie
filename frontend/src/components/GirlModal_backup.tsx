@@ -25,17 +25,17 @@ interface GirlModalProps {
   girlName: string;
   profileUrl: string;
   onViewsUpdated?: (girlId: number) => void;
-  onRepliesUpdated?: (
+  onCommentsUpdated?: (
     girlId: number,
-    newStats?: { repliesCount?: number; avgRating?: number }
+    newStats?: { commentsCount?: number; avgRating?: number }
   ) => void;
-  highlightReplyId?: number;
+  highlightCommentId?: number;
 }
 
-interface Reply {
+interface Comment {
   id: number;
   rating: number | null;
-  comment: string | null; // backend still uses "comment" field
+  comment: string | null;
   created_at: string;
   parent_id: number | null;
 }
@@ -47,28 +47,27 @@ export default function GirlModal({
   girlName,
   profileUrl,
   onViewsUpdated,
-  onRepliesUpdated,
-  highlightReplyId,
+  onCommentsUpdated,
+  highlightCommentId,
 }: GirlModalProps) {
-  const [replies, setReplies] = useState<Reply[]>([]);
+  const [comments, setComments] = useState<Comment[]>([]);
   const [views, setViews] = useState(0);
-  const [repliesCount, setRepliesCount] = useState(0);
+  const [commentsCount, setCommentsCount] = useState(0);
   const [avgRating, setAvgRating] = useState(0);
 
   const [rating, setRating] = useState<number | null>(0);
-  const [replyText, setReplyText] = useState("");
+  const [comment, setComment] = useState("");
   const [replyTo, setReplyTo] = useState<number | null>(null);
-  const [nestedReplyText, setNestedReplyText] = useState("");
+  const [replyText, setReplyText] = useState("");
   const [snackbarOpen, setSnackbarOpen] = useState(false);
 
-  // 🧠 load replies once per open
+  // 🧠 load comments only once per open
   useEffect(() => {
     if (!open || !girlId) return;
-    axios
-      .get(`${API_BASE}/api/roasts/girl/${girlId}/replies`)
+    axios.get(`${API_BASE}/api/roasts/girl/${girlId}/replies`)
       .then((res) => {
-        setReplies(res.data.replies || []);
-        setRepliesCount(res.data.repliesCount ?? 0);
+        setComments(res.data.replies || []);
+        setCommentsCount(res.data.repliesCount ?? 0);
         setAvgRating(res.data.avgRating ?? 0);
       })
       .catch((err) => console.error("fetch replies error", err));
@@ -84,99 +83,104 @@ export default function GirlModal({
     }
   }, [open, girlId]);
 
-  // 🔦 scroll to highlighted reply
+  // 🔦 scroll to highlighted comment
   useEffect(() => {
-    if (highlightReplyId) {
-      const el = document.getElementById(`reply-${highlightReplyId}`);
+    if (highlightCommentId) {
+      const el = document.getElementById(`comment-${highlightCommentId}`);
       if (el) {
         el.scrollIntoView({ behavior: "smooth", block: "center" });
-        el.classList.add("highlighted-reply");
-        setTimeout(() => el.classList.remove("highlighted-reply"), 2500);
+        el.classList.add("highlighted-comment");
+        setTimeout(() => el.classList.remove("highlighted-comment"), 2500);
       }
     }
-  }, [replies, highlightReplyId]);
+  }, [comments, highlightCommentId]);
 
-  // 🧠 optimistic top-level reply submit
-  const handleSubmitReply = async () => {
-    if (!replyText.trim() && !rating) return;
+  // 🧠 optimistic comment submit
+  const handleSubmitComment = async () => {
+    if (!comment.trim() && !rating) return;
 
     const tempId = Date.now();
-    const newReply: Reply = {
+    const newComment: Comment = {
       id: tempId,
       rating,
-      comment: replyText,
+      comment,
       created_at: new Date().toISOString(),
       parent_id: null,
     };
 
-    setReplies((prev) => [...prev, newReply]);
-    setRepliesCount((c) => c + 1);
+    // optimistic UI
+    setComments((prev) => [...prev, newComment]);
+    setCommentsCount((c) => c + 1);
 
-    const validRatings = replies
-      .map((r) => Number(r.rating))
-      .filter((r) => !isNaN(r) && r > 0);
-    const allRatings =
-      rating && rating > 0 ? [...validRatings, rating] : validRatings;
-    const newAvg =
-      allRatings.length > 0
-        ? allRatings.reduce((a, b) => a + b, 0) / allRatings.length
-        : 0;
-    setAvgRating(newAvg);
+    // 🧮 safer average calculation (prevents NaN)
+const validRatings = comments
+  .map((c) => Number(c.rating))
+  .filter((r) => !isNaN(r) && r > 0);
 
-    setReplyText("");
+const allRatings = rating && rating > 0 ? [...validRatings, rating] : validRatings;
+
+const newAvg =
+  allRatings.length > 0
+    ? allRatings.reduce((a, b) => a + b, 0) / allRatings.length
+    : 0;
+
+setAvgRating(newAvg);
+
+
+    setComment("");
     setRating(null);
     setSnackbarOpen(true);
 
     try {
       await axios.post(`${API_BASE}/api/roasts/${girlId}/replies`, {
         rating: rating && rating > 0 ? rating : null,
-        comment: replyText?.trim() || null, // backend expects "comment"
+        comment: comment?.trim() || null,
       });
-      onRepliesUpdated?.(girlId, {
-        repliesCount: repliesCount + 1,
+      onCommentsUpdated?.(girlId, {
+        commentsCount: commentsCount + 1,
         avgRating: newAvg,
       });
     } catch (err) {
-      console.error("Error adding reply:", err);
+      console.error("Error adding comment:", err);
     }
   };
 
-  // 🧠 optimistic nested reply submit
-  const handleSubmitNestedReply = async (parentId: number) => {
-    if (!nestedReplyText.trim()) return;
+  // 🧠 optimistic reply submit
+  const handleSubmitReply = async (parentId: number) => {
+    if (!replyText.trim()) return;
     const tempId = Date.now();
-    const newNested: Reply = {
+    const newReply: Comment = {
       id: tempId,
       rating: null,
-      comment: nestedReplyText.trim(),
+      comment: replyText.trim(),
       created_at: new Date().toISOString(),
       parent_id: parentId,
     };
 
-    setReplies((prev) => [...prev, newNested]);
-    setRepliesCount((c) => c + 1);
-    setNestedReplyText("");
+    setComments((prev) => [...prev, newReply]);
+    setCommentsCount((c) => c + 1);
+    setReplyText("");
     setReplyTo(null);
 
     try {
       await axios.post(`${API_BASE}/api/roasts/${girlId}/replies`, {
-        comment: nestedReplyText?.trim() || null,
+        comment: replyText?.trim() || null,
         parent_id: parentId,
       });
-      onRepliesUpdated?.(girlId, { repliesCount: repliesCount + 1 });
+      onCommentsUpdated?.(girlId, { commentsCount: commentsCount + 1 });
     } catch (err) {
-      console.error("Error posting nested reply:", err);
+      console.error("Error posting reply:", err);
     }
   };
 
-  const topLevel = replies.filter((r) => !r.parent_id);
-  const repliesMap = replies.reduce((acc, r) => {
-    if (r.parent_id) {
-      if (!acc[r.parent_id]) acc[r.parent_id] = [];
-      acc[r.parent_id].push(r);
+  const topLevel = comments.filter((c) => !c.parent_id);
+  const repliesMap = comments.reduce((acc, c) => {
+    if (c.parent_id) {
+      if (!acc[c.parent_id]) acc[c.parent_id] = [];
+      acc[c.parent_id].push(c);
     }
     return acc;
-  }, {} as Record<number, Reply[]>);
+  }, {} as Record<number, Comment[]>);
 
   if (!open) return null;
 
@@ -195,7 +199,7 @@ export default function GirlModal({
             <Typography variant="h6">{girlName || "Unknown"}</Typography>
             <Box sx={{ display: "flex", gap: 2 }}>
               <Typography variant="caption">👀 {views}</Typography>
-              <Typography variant="caption">💬 {repliesCount}</Typography>
+              <Typography variant="caption">💬 {commentsCount}</Typography>
               <Typography variant="caption">
                 ⭐️ {avgRating.toFixed(1)}
               </Typography>
@@ -207,30 +211,30 @@ export default function GirlModal({
         </DialogTitle>
 
         <DialogContent dividers>
-          <Typography variant="subtitle1">Replies</Typography>
+          <Typography variant="subtitle1">Comments</Typography>
           <Stack spacing={2} sx={{ mt: 1 }}>
             {topLevel.length === 0 ? (
               <Typography variant="body2" color="text.secondary">
-                No replies yet.
+                No comments yet.
               </Typography>
             ) : (
-              topLevel.map((r) => (
-                <Box key={r.id} id={`reply-${r.id}`}>
-                  {r.rating && (
+              topLevel.map((c) => (
+                <Box key={c.id} id={`comment-${c.id}`}>
+                  {c.rating && (
                     <Typography variant="body2">
-                      ⭐️ {Number(r.rating).toFixed(1)}
+                      ⭐️ {Number(c.rating).toFixed(1)}
                     </Typography>
                   )}
-                  <Typography variant="body2">{r.comment}</Typography>
+                  <Typography variant="body2">{c.comment}</Typography>
                   <Typography variant="caption" color="text.secondary">
-                    {new Date(r.created_at).toLocaleString()}
+                    {new Date(c.created_at).toLocaleString()}
                   </Typography>
-                  <Button size="small" onClick={() => setReplyTo(r.id)}>
+                  <Button size="small" onClick={() => setReplyTo(c.id)}>
                     Reply
                   </Button>
-                  {repliesMap[r.id]?.map((child) => (
+                  {repliesMap[c.id]?.map((r) => (
                     <Box
-                      key={child.id}
+                      key={r.id}
                       sx={{
                         ml: 4,
                         mt: 1,
@@ -239,26 +243,26 @@ export default function GirlModal({
                         borderRadius: 1,
                       }}
                     >
-                      <Typography variant="body2">{child.comment}</Typography>
+                      <Typography variant="body2">{r.comment}</Typography>
                       <Typography variant="caption" color="text.secondary">
-                        {new Date(child.created_at).toLocaleString()}
+                        {new Date(r.created_at).toLocaleString()}
                       </Typography>
                     </Box>
                   ))}
-                  {replyTo === r.id && (
+                  {replyTo === c.id && (
                     <Stack spacing={1} sx={{ mt: 1, ml: 4 }}>
                       <TextField
                         label="Write a reply"
                         multiline
                         rows={2}
-                        value={nestedReplyText}
-                        onChange={(e) => setNestedReplyText(e.target.value)}
+                        value={replyText}
+                        onChange={(e) => setReplyText(e.target.value)}
                       />
                       <Button
                         variant="outlined"
                         size="small"
-                        onClick={() => handleSubmitNestedReply(r.id)}
-                        disabled={!nestedReplyText.trim()}
+                        onClick={() => handleSubmitReply(c.id)}
+                        disabled={!replyText.trim()}
                       >
                         Post Reply
                       </Button>
@@ -270,7 +274,7 @@ export default function GirlModal({
           </Stack>
 
           <Box sx={{ mt: 3 }}>
-            <Typography variant="subtitle1">Leave a Reply</Typography>
+            <Typography variant="subtitle1">Leave a Comment</Typography>
             <Stack spacing={2} sx={{ mt: 1 }}>
               <Rating
                 value={rating}
@@ -278,16 +282,16 @@ export default function GirlModal({
                 precision={0.5}
               />
               <TextField
-                label="Your reply"
+                label="Your comment"
                 multiline
                 rows={3}
-                value={replyText}
-                onChange={(e) => setReplyText(e.target.value)}
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
               />
               <Button
                 variant="contained"
-                onClick={handleSubmitReply}
-                disabled={!rating && !replyText.trim()}
+                onClick={handleSubmitComment}
+                disabled={!rating && !comment.trim()}
               >
                 Submit
               </Button>
@@ -307,7 +311,7 @@ export default function GirlModal({
         anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       >
         <Alert severity="success" onClose={() => setSnackbarOpen(false)}>
-          Reply submitted!
+          Comment submitted!
         </Alert>
       </Snackbar>
     </>

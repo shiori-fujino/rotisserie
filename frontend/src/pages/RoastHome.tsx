@@ -22,6 +22,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { API_BASE } from "../config";
 
+
 interface Roast {
   id: number;
   title: string;
@@ -29,6 +30,8 @@ interface Roast {
   created_at: string;
   pinned: boolean;
   heat: number;
+  views: number;
+  replies_count: number;
   girl_id: number | null;
 }
 
@@ -36,9 +39,6 @@ const categories = [
   { value: "all", label: "All" },
   { value: "girl", label: "Girls" },
   { value: "general", label: "General" },
-  { value: "story", label: "Story" },
-  { value: "health", label: "Health" },
-  { value: "fun", label: "Fun" },
   { value: "qna", label: "Q&A" },
 ];
 
@@ -118,7 +118,16 @@ export default function RoastHome() {
             new Date(b.created_at).getTime() -
             new Date(a.created_at).getTime()
         );
+const placeholders = [
+  "What’s the latest gossip?",
+  "Confess your addiction 💀",
+  "Which shop is secretly overrated?",
+  "Drop your Sunday night regrets",
+  "Spotted something wild this week? 👀",
+];
 
+const randomPlaceholder =
+  placeholders[Math.floor(Math.random() * placeholders.length)];
   /* ----------------------------------- UI ----------------------------------- */
   if (loading) {
     return (
@@ -137,12 +146,15 @@ export default function RoastHome() {
           Start Roasting 🔥
         </Typography>
         <TextField
-          fullWidth
-          label="What's on your mind?"
-          value={newTitle}
-          onChange={(e) => setNewTitle(e.target.value)}
-          sx={{ mb: 2 }}
-        />
+  fullWidth
+  multiline
+  minRows={3}
+  placeholder={randomPlaceholder}
+  value={newTitle}
+  onChange={(e) => setNewTitle(e.target.value)}
+  sx={{ mb: 2 }}
+/>
+
         <TextField
           select
           label="Category"
@@ -198,56 +210,81 @@ export default function RoastHome() {
 
       <Divider sx={{ mb: 2 }} />
 
-      {/* Roast List */}
-      {sorted.length === 0 ? (
-        <Typography color="text.secondary">
-          No roasts found. Be the first to post!
-        </Typography>
-      ) : (
-        sorted.map((roast) => (
-          <Paper
-            key={roast.id}
-            sx={{
-              p: 2,
-              mb: 2,
-              borderLeft: roast.pinned
-                ? "4px solid orange"
-                : "2px solid #eee",
-              "&:hover": { boxShadow: 3, cursor: "pointer" },
-              bgcolor:
-                roast.heat > 20
-                  ? "rgba(255, 69, 0, 0.08)"
-                  : "background.paper",
-            }}
-            onClick={() => navigate(`/roast/${roast.id}`)}
-          >
-            <Typography
-              variant="h6"
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-              }}
-            >
-              <span>{roast.title}</span>
-              <Button
-                size="small"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleAddHeat(roast.id);
-                }}
-              >
-                🔥 {roast.heat}
-              </Button>
-            </Typography>
+{/* Roast List */}
+{sorted.length === 0 ? (
+  <Typography color="text.secondary">No roasts found. Be the first to post!</Typography>
+) : (
+<Stack divider={<Divider flexItem />} spacing={1}>
+  {sorted.map((r) => (
+    <Box
+      key={r.id}
+      onClick={() => navigate(`/roast/${r.id}`)}
+      sx={{
+        py: 1,
+        px: 1,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        "&:hover": { bgcolor: "rgba(255,255,255,0.03)", cursor: "pointer" },
+      }}
+    >
+      {/* Left: emoji + title */}
+      <Typography
+        sx={{
+          flex: 6,
+          fontWeight: 500,
+          fontSize: 15,
+          display: "flex",
+          alignItems: "center",
+          gap: 1,
+          overflow: "hidden",
+          whiteSpace: "nowrap",
+          textOverflow: "ellipsis",
+        }}
+      >
+        <span style={{ opacity: 0.7 }}>
+          {r.category === "fun"
+            ? "🎉"
+            : r.category === "story"
+            ? "☕️"
+            : r.category === "qna"
+            ? "⁇"
+            : r.category === "health"
+            ? "💊"
+            : r.category === "girl"
+            ? "💦"
+            : "🔥"}
+        </span>
+        {r.title}
+      </Typography>
 
-            <Typography variant="body2" color="text.secondary">
-              {roast.category.toUpperCase()} ·{" "}
-              {new Date(roast.created_at).toLocaleString()}
-            </Typography>
-          </Paper>
-        ))
-      )}
+      {/* Right: date + stats */}
+      <Box
+        sx={{
+          flex: 4,
+          display: "flex",
+          justifyContent: "flex-end",
+          gap: 2,
+          fontSize: 13,
+          color: "text.secondary",
+          whiteSpace: "nowrap",
+        }}
+      >
+        <Typography>
+          {new Date(r.created_at).toLocaleDateString("en-AU", {
+            day: "numeric",
+            month: "long", // ✅ “October” instead of “Oct”
+          })}
+        </Typography>
+        <Typography>👀 {r.views ?? 0}</Typography>
+        <Typography>💬 {r.replies_count ?? 0}</Typography>
+      </Box>
+    </Box>
+  ))}
+</Stack>
+
+)}
+
     </Box>
   );
 }

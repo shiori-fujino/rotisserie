@@ -1,6 +1,4 @@
-//roastview.tsx
-
-
+// src/pages/RoastView.tsx
 import { useEffect, useState, useMemo } from "react";
 import axios from "axios";
 import {
@@ -40,6 +38,7 @@ interface GirlInfo {
   name: string;
   photo: string | null;
   profile_url: string;
+  views?: number;
 }
 
 export default function RoastView() {
@@ -49,33 +48,44 @@ export default function RoastView() {
   const [girl, setGirl] = useState<GirlInfo | null>(null);
   const [avgRating, setAvgRating] = useState<number>(0);
   const [loading, setLoading] = useState(true);
-
   const [replyText, setReplyText] = useState("");
   const [replyTo, setReplyTo] = useState<number | null>(null);
 
+  useEffect(() => {
+  axios.post(`${API_BASE}/api/roasts/${id}/view`).catch(() => {});
+}, [id]);
 
-  
   /* -------------------------------------------------------------------------- */
   /* Fetch roast + replies                                                      */
   /* -------------------------------------------------------------------------- */
   useEffect(() => {
     if (!id) return;
     setLoading(true);
-    
+
     const fetchAll = async () => {
       try {
         const roastRes = await axios.get(`${API_BASE}/api/roasts/${id}`);
-        setRoast(roastRes.data);
+        const roastData = roastRes.data.roast || roastRes.data;
+        setRoast(roastData);
 
         const repliesRes = await axios.get(`${API_BASE}/api/roasts/${id}/replies`);
         setReplies(repliesRes.data.replies);
         setAvgRating(repliesRes.data.avgRating);
 
-        // fetch girl info if it's a girl-type roast
-        if (roastRes.data.category === "girl" && roastRes.data.girl_id) {
-          const g = await axios.get(`${API_BASE}/api/girls/${roastRes.data.girl_id}`);
-          setGirl(g.data);
-        }
+        // Fetch girl info only if it's a girl-type roast
+        if (roastData.category === "girl" && roastData.girl_id) {
+  try {
+    const g = await axios.get(`${API_BASE}/api/girls/${roastData.girl_id}`);
+    setGirl(g.data);
+
+    // 🔥 NEW: also fetch + increment views like GirlModal does
+    const v = await axios.post(`${API_BASE}/api/views/${roastData.girl_id}`);
+    setGirl((prev) => prev ? { ...prev, views: v.data.views } : prev);
+  } catch (err) {
+    console.warn("⚠️ girl not found or no views:", roastData.girl_id);
+  }
+}
+
       } catch (err) {
         console.error("Error fetching roast view:", err);
       } finally {
@@ -101,7 +111,7 @@ export default function RoastView() {
   }, [replies]);
 
   /* -------------------------------------------------------------------------- */
-  /* Helper: render comment text with >>id links                                */
+  /* Helpers                                                                    */
   /* -------------------------------------------------------------------------- */
   const renderLinkedText = (text: string) => {
     const parts = text.split(/(>>\d+)/g);
@@ -132,9 +142,6 @@ export default function RoastView() {
     });
   };
 
-  /* -------------------------------------------------------------------------- */
-  /* Handle posting reply                                                       */
-  /* -------------------------------------------------------------------------- */
   const handleSubmitReply = async (parentId: number | null = null) => {
     if (!replyText.trim()) return;
     try {
@@ -153,9 +160,6 @@ export default function RoastView() {
     }
   };
 
-  /* -------------------------------------------------------------------------- */
-  /* Add heat to roast                                                          */
-  /* -------------------------------------------------------------------------- */
   const handleAddHeat = async () => {
     if (!roast) return;
     setRoast((prev) => (prev ? { ...prev, heat: prev.heat + 1 } : prev));
@@ -179,57 +183,142 @@ export default function RoastView() {
     return m;
   }, [replies]);
 
-  if (loading) {
+  /* -------------------------------------------------------------------------- */
+  /* Loading + Empty States                                                     */
+  /* -------------------------------------------------------------------------- */
+  if (loading)
     return (
       <Stack alignItems="center" sx={{ py: 8 }}>
         <CircularProgress />
-        <Typography sx={{ mt: 2 }}>Loading roast…🍗</Typography>
+        <Typography sx={{ mt: 2 }}>Cooking roast…🍗</Typography>
       </Stack>
     );
-  }
 
   if (!roast) return <Typography>Roast not found.</Typography>;
 
+  /* -------------------------------------------------------------------------- */
+  /* UI                                                                         */
+  /* -------------------------------------------------------------------------- */
   return (
-    <Box sx={{ maxWidth: 800, mx: "auto", p: 2 }}>
-      {/* Header */}
-      <Paper sx={{ p: 2, mb: 3 }}>
-        <Stack direction="row" justifyContent="space-between" alignItems="center">
-          <Typography variant="h5" fontWeight="bold">
+    <Box sx={{ maxWidth: 800, mx: "auto", p: 0 }}>
+      {/* ───────────── HEADER ───────────── */}
+      <Paper
+        elevation={1}
+        sx={{
+          p: 3,
+          mb: 4,
+          borderRadius: 3,
+          background: "linear-gradient(145deg, #fff 0%, #fafafa 100%)",
+          border: "1px solid #eee",
+        }}
+      >
+        {/* Title + Heat */}
+        <Stack
+          direction="row"
+          justifyContent="space-between"
+          alignItems="center"
+          sx={{ mb: 1 }}
+        >
+          <Typography variant="h5" fontWeight={700} sx={{ lineHeight: 1.2, pr: 2 }}>
             {roast.title}
           </Typography>
-          <Button size="small" onClick={handleAddHeat}>
+          <Button
+            size="small"
+            onClick={handleAddHeat}
+            sx={{
+              borderRadius: 2,
+              backgroundColor: "#fff3e0",
+              color: "#e65100",
+              fontWeight: 600,
+              "&:hover": { backgroundColor: "#ffe0b2" },
+            }}
+          >
             🔥 {roast.heat}
           </Button>
         </Stack>
 
-        <Typography variant="body2" color="text.secondary">
-{roast?.category?.toUpperCase?.() || "GENERAL"} ·{" "}
-          {new Date(roast.created_at).toLocaleString()}
-        </Typography>
+        {/* Meta info */}
+        <Stack direction="row" spacing={2} flexWrap="wrap" sx={{ mt: 0.5 }}>
+  <Typography variant="body2" color="text.secondary">
+    {(roast.category || "general").toUpperCase()}
+  </Typography>
+  <Typography variant="body2" color="text.secondary">
+    🕓{" "}
+    {roast.created_at
+      ? new Date(roast.created_at).toLocaleString("en-AU", {
+          dateStyle: "medium",
+          timeStyle: "short",
+        })
+      : "N/A"}
+  </Typography>
+  <Typography variant="body2" color="text.secondary">
+    💬 {replies.length} replies
+  </Typography>
+</Stack>
 
-        {/* girl info */}
+
+        {/* Girl Info */}
         {girl && (
-          <Stack direction="row" spacing={2} alignItems="center" sx={{ mt: 2 }}>
-            <img
-              src={girl.photo || "/fallback.jpg"}
-              alt={girl.name}
-              style={{ width: 60, height: 60, borderRadius: 8, objectFit: "cover" }}
-            />
-            <Box>
-              <Typography variant="subtitle1">{girl.name}</Typography>
-              <Link href={girl.profile_url} target="_blank" rel="noreferrer">
-                Visit Profile
-              </Link>
-              {avgRating > 0 && (
-                <Typography variant="body2">⭐ {avgRating.toFixed(1)}</Typography>
-              )}
-            </Box>
-          </Stack>
+  <Stack
+    direction="row"
+    alignItems="center"
+    spacing={2.5}
+    sx={{
+      p: 2,
+      mt: 2,
+      border: "1px solid #eee",
+      borderRadius: 2,
+      backgroundColor: "#fcfcfc",
+    }}
+  >
+    {/* thumbnail */}
+    <Box
+      component="img"
+      src={girl.photo || "/fallback.jpg"}
+      alt={girl.name}
+      sx={{
+        width: 72,
+        height: 72,
+        borderRadius: 2,
+        objectFit: "cover",
+        flexShrink: 0,
+        boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
+      }}
+    />
+
+    {/* info */}
+    <Stack spacing={0.5} sx={{ flexGrow: 1 }}>
+      <Typography variant="subtitle1" fontWeight={600}>
+        {girl.name}
+      </Typography>
+
+      <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
+        {avgRating > 0 && (
+          <Typography variant="body2" color="text.secondary">
+            ⭐ {avgRating.toFixed(1)}
+          </Typography>
         )}
+        <Typography variant="body2" color="text.secondary">
+          👁️ {girl?.views ?? 0} views
+        </Typography>
+        <Link
+          href={girl.profile_url}
+          target="_blank"
+          rel="noreferrer"
+          underline="hover"
+          color="primary"
+          sx={{ fontSize: 14 }}
+        >
+          Visit Profile ↗
+        </Link>
+      </Stack>
+    </Stack>
+  </Stack>
+)}
+
       </Paper>
 
-      {/* Replies */}
+      {/* ───────────── REPLIES ───────────── */}
       <Stack spacing={2}>
         {topLevel.map((r) => (
           <Box
@@ -282,11 +371,7 @@ export default function RoastView() {
               >
                 <Typography variant="caption" color="text.secondary">
                   🪪 {child.user_mask || "Anon"} ·{" "}
-                  <Link
-                    href={`#${child.id}`}
-                    underline="hover"
-                    color="text.secondary"
-                  >
+                  <Link href={`#${child.id}`} underline="hover" color="text.secondary">
                     No.{child.id}
                   </Link>{" "}
                   · {new Date(child.created_at).toLocaleString()}
@@ -323,7 +408,9 @@ export default function RoastView() {
 
         {/* New top-level reply */}
         <Box sx={{ mt: 3 }}>
-          <Typography variant="subtitle1">Add a Reply</Typography>
+          <Typography variant="subtitle1" fontWeight={600}>
+            Add a Reply
+          </Typography>
           <Stack spacing={1} sx={{ mt: 1 }}>
             <TextField
               label="Your comment"

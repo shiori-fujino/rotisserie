@@ -50,17 +50,17 @@ export default function HomePage() {
     );
   };
 
-  const handleCommentsUpdated = (
+  const handleRepliesUpdated = (
     girlId: number,
-    newStats?: { commentsCount?: number; avgRating?: number }
+    newStats?: { repliesCount?: number; avgRating?: number }
   ) => {
     setShuffled((prev) =>
       prev.map((g) =>
         g.id === girlId
           ? {
               ...g,
-              commentsCount:
-                newStats?.commentsCount ?? (g.commentsCount || 0) + 1,
+              repliesCount:
+                newStats?.repliesCount ?? (g.repliesCount || 0) + 1,
               avgRating:
                 newStats?.avgRating ?? g.avgRating ?? 0,
             }
@@ -87,12 +87,22 @@ export default function HomePage() {
     return uniq.sort();
   }, [shuffled]);
 
-  const filtered = useMemo(() => {
-    let out = shuffled;
-    if (filters.shop) out = out.filter((d) => d.shop === filters.shop);
-    if (filters.origin) out = out.filter((d) => d.origin === filters.origin);
-    return out;
-  }, [shuffled, filters]);
+const filtered = useMemo(() => {
+  let out = shuffled;
+
+  // filter by shop & origin
+  if (filters.shop) out = out.filter((d) => d.shop === filters.shop);
+  if (filters.origin) out = out.filter((d) => d.origin === filters.origin);
+
+  // ✅ sort by views only
+  if (filters.sort === "popularity-desc") {
+    out = [...out].sort((a, b) => (b.views ?? 0) - (a.views ?? 0));
+  } else if (filters.sort === "popularity-asc") {
+    out = [...out].sort((a, b) => (a.views ?? 0) - (b.views ?? 0));
+  }
+
+  return out;
+}, [shuffled, filters]);
 
   return (
     <Layout onShuffle={handleShuffle}>
@@ -128,7 +138,7 @@ export default function HomePage() {
             girlName={selectedGirl.name}
             profileUrl={selectedGirl.profileUrl}
             onViewsUpdated={handleViewsUpdated}
-            onCommentsUpdated={handleCommentsUpdated}
+            onRepliesUpdated={handleRepliesUpdated}
           />
         )}
       </Container>
