@@ -78,31 +78,7 @@ export default function RoastHome() {
   };
 
   /* ----------------------------- heat up a roast ----------------------------- */
-  const handleAddHeat = (roastId: number) => {
-    // optimistic update
-    setRoasts((prev) =>
-      prev.map((r) =>
-        r.id === roastId ? { ...r, heat: (r.heat || 0) + 1 } : r
-      )
-    );
 
-    axios
-      .post(`${API_BASE}/api/roasts/${roastId}/heat`)
-      .then((res) => {
-        setRoasts((prev) =>
-          prev.map((r) => (r.id === roastId ? res.data : r))
-        );
-      })
-      .catch((err) => {
-        console.error("Error adding heat:", err);
-        // rollback if failed
-        setRoasts((prev) =>
-          prev.map((r) =>
-            r.id === roastId ? { ...r, heat: Math.max(0, (r.heat || 1) - 1) } : r
-          )
-        );
-      });
-  };
 
   /* ----------------------------- filters & sorting ----------------------------- */
   const filtered = roasts.filter((r) => {

@@ -78,7 +78,6 @@ export default function AdminPage() {
   const [loadingPosts, setLoadingPosts] = useState(false);
   const [newTitle, setNewTitle] = useState("");
   const [newContent, setNewContent] = useState("");
-  const [editingPost, setEditingPost] = useState<BlogPost | null>(null);
   const [successMsg, setSuccessMsg] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
 
