@@ -28,7 +28,6 @@ AVIA_SHOPS = [
     ("Sydney Empress 69", "https://sydneyempress69.com/todays-roster/"),
 ]
 
-
 def run(cmd: str):
     """Run a legacy scraper file as a subprocess."""
     print(f"\n=== Running {cmd} ===\n")

@@ -2,7 +2,7 @@ name: Nightly Scraper
 
 on:
   schedule:
-    - cron: "0 14 * * *"  # midnight Sydney (AEST). We'll handle DST next.
+    - cron: "0 14 * * *"  # midnight Sydney (AEST)
   workflow_dispatch:
 
 jobs:
@@ -24,6 +24,6 @@ jobs:
 
       - name: Run scraper
         working-directory: ./scrapers
-        env: 
+        env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        run: python3 scrapers/run_all.py
+        run: python3 run_all.py
