@@ -1,5 +1,5 @@
 // src/pages/EmploymentGirlPage.tsx
-import { Box, Typography, Stack, Button } from "@mui/material";
+import { Box, Typography, Button } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "@mui/material/styles";
 import { GIRL_COPY } from "../contents/employment";
