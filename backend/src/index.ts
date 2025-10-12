@@ -20,6 +20,7 @@ import ensureAnonId from "./middleware/anonId";
 import roastsRouter from "./routes/roasts";
 import repliesRouter from "./routes/replies";
 import girlsRouter from "./routes/girls";
+import adminRoutes from "./routes/admin";
 
 
 console.log("DB URL:", process.env.DATABASE_URL);
@@ -64,6 +65,7 @@ app.use("/api/visits", visitsRoutes);
 // admin-only → already JWT protected
 app.use("/api/auth", authRoutes);
 app.use("/api/blog", blogRoutes);
+app.use("/api/admin", adminRoutes);
 
 // health check
 app.get("/api/health", async (_req, res) => {

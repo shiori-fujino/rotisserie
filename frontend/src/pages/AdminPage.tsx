@@ -1,205 +1,175 @@
+// src/pages/AdminPage.tsx
 import { useEffect, useState } from "react";
 import axios from "axios";
 import {
   Box,
   Typography,
-  Tabs,
-  Tab,
   Stack,
   Paper,
-  Divider,
   CircularProgress,
-  Button,
-  TextField,
   Chip,
+  IconButton,
+  Tooltip,
+  Table,
+  TableHead,
+  TableRow,
+  TableCell,
+  TableBody,
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
 } from "@mui/material";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
+import RefreshIcon from "@mui/icons-material/Refresh";
+import FiltersBar, { Filters } from "../components/FiltersBar";
 import { API_BASE } from "../config";
 
 axios.defaults.baseURL = API_BASE;
 
-/* -------------------------------------------------------------------------- */
-/* Types                                                                      */
-/* -------------------------------------------------------------------------- */
-interface ContactMessage {
-  id: number;
-  message: string;
-  created_at: string;
-}
+const TABLES = [
+  "shops",
+  "girls",
+  "roasts",
+  "replies",
+  "blog_posts",
+  "contact_messages",
+  "site_visits",
+];
 
-interface BlogPost {
-  id: number;
-  title: string;
-  content: string;
-  created_at: string;
-}
-
-interface Roast {
-  id: number;
-  title: string;
-  created_at: string;
-  heat: number;
-  category?: string;
-  type: "roast";
-}
-
-interface Reply {
-  id: number;
-  roast_id: number;
-  comment: string | null;
-  rating: number | null;
-  created_at: string;
-  roast_title?: string;
-  type: "reply";
-}
-
-type FeedItem = Roast | Reply;
-
-/* -------------------------------------------------------------------------- */
-/* Admin Page                                                                 */
-/* -------------------------------------------------------------------------- */
 export default function AdminPage() {
-  const [tab, setTab] = useState(0);
   const [token, setToken] = useState<string | null>(
     localStorage.getItem("admin_token")
   );
+  const [selectedTable, setSelectedTable] = useState(TABLES[1]); // default: girls
+  const [rows, setRows] = useState<any[]>([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(false);
+
+  const [filters, setFilters] = useState<Filters>({
+    shop: "",
+    origin: "",
+    sort: "id-desc",
+    layout: "grid",
+  });
+
+  const [page, setPage] = useState(1);
+  const limit = 50; // rows per page
+
+  // --- edit modal state ---
+  const [editingGirl, setEditingGirl] = useState<any | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editOrigin, setEditOrigin] = useState("");
+
+  // --- shop name mapping ---
+  const [shops, setShops] = useState<Record<number, string>>({});
+
+  useEffect(() => {
+    if (!token) return;
+    (async () => {
+      try {
+        const res = await axios.get("/api/admin/table?name=shops", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const map: Record<number, string> = {};
+        res.data.rows.forEach((s: any) => {
+          map[s.id] = s.name;
+        });
+        setShops(map);
+      } catch (err) {
+        console.error("fetch shops fail", err);
+      }
+    })();
+  }, [token]);
+
+  // --- Fetch table with filters + pagination ---
+  const fetchTable = async () => {
+    if (!token) return;
+    setLoading(true);
+    try {
+      const res = await axios.get(`/api/admin/table`, {
+        headers: { Authorization: `Bearer ${token}` },
+        params: {
+          name: selectedTable,
+          shop: filters.shop || undefined,
+          origin: filters.origin || undefined,
+          sort: filters.sort || "id-desc",
+          page,
+          limit,
+        },
+      });
+      setRows(res.data.rows);
+      setTotal(res.data.total || 0);
+    } catch (err) {
+      console.error("fetch table fail", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchTable();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedTable, token, page, filters]);
+
+  // --- login form ---
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-
-  // state
-  const [messages, setMessages] = useState<ContactMessage[]>([]);
-  const [loadingMessages, setLoadingMessages] = useState(false);
-
-  const [feed, setFeed] = useState<FeedItem[]>([]);
-  const [loadingFeed, setLoadingFeed] = useState(false);
-
-  const [posts, setPosts] = useState<BlogPost[]>([]);
-  const [loadingPosts, setLoadingPosts] = useState(false);
-  const [newTitle, setNewTitle] = useState("");
-  const [newContent, setNewContent] = useState("");
-  const [successMsg, setSuccessMsg] = useState("");
-  const [errorMsg, setErrorMsg] = useState("");
-
-  /* ----------------------------- LOGIN LOGIC ------------------------------ */
   const login = async () => {
     try {
       const res = await axios.post("/api/auth/login", { username, password });
       localStorage.setItem("admin_token", res.data.token);
       setToken(res.data.token);
     } catch {
-      alert("Login failed. Check credentials.");
+      alert("Login failed");
     }
   };
 
-  /* ---------------------------- FETCH MESSAGES ---------------------------- */
-  useEffect(() => {
-    if (tab === 0 && token) {
-      setLoadingMessages(true);
-      axios
-        .get<ContactMessage[]>("/api/contact", {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-        .then((res) => setMessages(res.data))
-        .catch((err) => console.error("fetch contact fail", err))
-        .finally(() => setLoadingMessages(false));
-    }
-  }, [tab, token]);
-
-  /* --------------------------- FETCH ROAST FEED --------------------------- */
-  useEffect(() => {
-    if (tab === 1 && token) {
-      const load = async () => {
-        setLoadingFeed(true);
-        try {
-          const [roastsRes, repliesRes] = await Promise.all([
-            axios.get<Omit<Roast, "type">[]>("/api/roasts"),
-            axios.get<Omit<Reply, "type">[]>("/api/replies/all"),
-          ]);
-
-          const roastItems: Roast[] = roastsRes.data.map((r) => ({
-            ...r,
-            type: "roast" as const,
-          }));
-          const replyItems: Reply[] = repliesRes.data.map((r) => ({
-            ...r,
-            type: "reply" as const,
-          }));
-
-          const merged: FeedItem[] = [...roastItems, ...replyItems].sort(
-            (a, b) =>
-              new Date(b.created_at).getTime() -
-              new Date(a.created_at).getTime()
-          );
-
-          setFeed(merged);
-        } catch (err) {
-          console.error("fetch feed fail", err);
-        } finally {
-          setLoadingFeed(false);
-        }
-      };
-      load();
-    }
-  }, [tab, token]);
-
-  const deleteRoast = async (id: number) => {
-    if (!window.confirm("Delete this roast and its replies?")) return;
-    await axios
-      .delete(`/api/roasts/${id}`)
-      .then(() => setFeed((prev) => prev.filter((x) => !(x.type === "roast" && x.id === id))))
-      .catch((err) => console.error("delete roast fail", err));
+  // --- Edit girl handlers ---
+  const handleEditGirl = (girl: any) => {
+    setEditingGirl(girl);
+    setEditName(girl.name || "");
+    setEditOrigin(girl.origin || "");
   };
 
-  const deleteReply = async (id: number) => {
-    if (!window.confirm("Delete this reply?")) return;
-    await axios
-      .delete(`/api/replies/${id}`)
-      .then(() => setFeed((prev) => prev.filter((x) => !(x.type === "reply" && x.id === id))))
-      .catch((err) => console.error("delete reply fail", err));
-  };
-
-  /* ----------------------------- FETCH BLOG ------------------------------- */
-  useEffect(() => {
-    if (tab === 2 && token) {
-      setLoadingPosts(true);
-      axios
-        .get<BlogPost[]>("/api/blog", {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-        .then((res) => setPosts(res.data))
-        .catch((err) => console.error("fetch blog fail", err))
-        .finally(() => setLoadingPosts(false));
-    }
-  }, [tab, token]);
-
-  const createPost = async () => {
+  const saveEditGirl = async () => {
+    if (!editingGirl) return;
     try {
-      const res = await axios.post<BlogPost>(
-        "/api/blog",
-        { title: newTitle, content: newContent },
+      const res = await axios.patch(
+        `/api/admin/girl/${editingGirl.id}`,
+        { name: editName, origin: editOrigin },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      setPosts([res.data, ...posts]);
-      setNewTitle("");
-      setNewContent("");
-      setSuccessMsg("Post created!");
-    } catch {
-      setErrorMsg("Failed to create post");
+
+      setRows((prev) =>
+        prev.map((r) =>
+          r.id === editingGirl.id ? { ...r, ...res.data.updated } : r
+        )
+      );
+
+      setEditingGirl(null);
+    } catch (err) {
+      console.error("update girl fail", err);
+      alert("Failed to update girl.");
     }
   };
 
-  const deletePost = async (id: number) => {
-    if (!window.confirm("Delete this post?")) return;
-    await axios
-      .delete(`/api/blog/${id}`, {
+  // --- Delete girl handler ---
+  const handleDeleteGirl = async (girl: any) => {
+    if (!window.confirm(`Delete ${girl.name}?`)) return;
+    try {
+      await axios.delete(`/api/admin/girl/${girl.id}`, {
         headers: { Authorization: `Bearer ${token}` },
-      })
-      .then(() => setPosts((p) => p.filter((x) => x.id !== id)))
-      .catch(() => setErrorMsg("Failed to delete post"));
+      });
+      setRows((prev) => prev.filter((r) => r.id !== girl.id));
+    } catch (err) {
+      console.error("delete girl fail", err);
+      alert("Failed to delete girl.");
+    }
   };
 
-  /* ----------------------------- LOGIN SCREEN ----------------------------- */
+  // --- Login screen ---
   if (!token) {
     return (
       <Box sx={{ maxWidth: 400, mx: "auto", mt: 8 }}>
@@ -207,225 +177,212 @@ export default function AdminPage() {
           Admin Login
         </Typography>
         <Stack spacing={2}>
-          <TextField
-            label="Username"
+          <input
+            placeholder="Username"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
+            style={{ padding: 8 }}
           />
-          <TextField
-            label="Password"
+          <input
+            placeholder="Password"
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            style={{ padding: 8 }}
           />
-          <Button variant="contained" onClick={login}>
-            Login
-          </Button>
+          <button onClick={login}>Login</button>
         </Stack>
       </Box>
     );
   }
 
-  /* ---------------------------- MAIN DASHBOARD ---------------------------- */
+  // --- UI ---
   return (
-    <Box sx={{ maxWidth: 900, mx: "auto", py: 4 }}>
-      <Typography variant="h4" gutterBottom>
-        Admin Dashboard
-      </Typography>
+    <Box sx={{ maxWidth: 1200, mx: "auto", py: 4 }}>
+      {/* Header */}
+      <Stack
+        direction="row"
+        alignItems="center"
+        justifyContent="space-between"
+        sx={{ mb: 2 }}
+      >
+        <Typography variant="h4">Admin Dashboard</Typography>
+        <Tooltip title="Refresh">
+          <IconButton onClick={fetchTable}>
+            <RefreshIcon />
+          </IconButton>
+        </Tooltip>
+      </Stack>
 
-      <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 3 }}>
-        <Tab label="Contact Messages" />
-        <Tab label="Roast Feed" />
-        <Tab label="Blog Posts" />
-      </Tabs>
+      {/* Table selector */}
+      <Stack direction="row" spacing={1} sx={{ mb: 2, flexWrap: "wrap" }}>
+        {TABLES.map((t) => (
+          <Chip
+            key={t}
+            label={t}
+            color={selectedTable === t ? "primary" : "default"}
+            onClick={() => {
+              setSelectedTable(t);
+              setPage(1);
+            }}
+          />
+        ))}
+      </Stack>
 
-      {/* CONTACT MESSAGES */}
-      {tab === 0 && (
-        <Box>
-          <Typography variant="h6" gutterBottom>
-            Contact Messages
-          </Typography>
-          {loadingMessages ? (
-            <Box textAlign="center" mt={4}>
-              <CircularProgress />
-            </Box>
-          ) : (
-            <Stack spacing={2}>
-              {messages.map((msg) => (
-                <Paper key={msg.id} sx={{ p: 2 }}>
-                  <Typography>{msg.message}</Typography>
-                  <Divider sx={{ my: 1 }} />
-                  <Typography variant="caption" color="text.secondary">
-                    {new Date(msg.created_at).toLocaleString()}
-                  </Typography>
-                </Paper>
-              ))}
-              {messages.length === 0 && (
-                <Typography>No messages yet 🍗</Typography>
-              )}
-            </Stack>
-          )}
+      {/* Filters only when "girls" selected */}
+      {selectedTable === "girls" && (
+        <Box sx={{ mb: 2 }}>
+          <FiltersBar
+            value={filters}
+            onChange={setFilters}
+            shops={Object.values(shops)}
+            origins={[...new Set(rows.map((r) => r.origin).filter(Boolean))]}
+          />
         </Box>
       )}
 
-      {/* ROAST FEED */}
-      {tab === 1 && (
-        <Box>
-          <Typography variant="h6" gutterBottom>
-            All Roasts & Replies
-          </Typography>
-          {loadingFeed ? (
-            <Box textAlign="center" mt={4}>
-              <CircularProgress />
-            </Box>
-          ) : (
-            <Stack spacing={2}>
-              {feed.map((item) => (
-                <Paper key={`${item.type}-${item.id}`} sx={{ p: 2 }}>
-                  <Stack
-                    direction="row"
-                    alignItems="center"
-                    justifyContent="space-between"
-                  >
-                    <Typography variant="subtitle1">
-                      {item.type === "roast" ? (
-                        <>
-                          <Chip label="Roast" color="warning" size="small" />{" "}
-                          {item.title}
-                        </>
-                      ) : (
-                        <>
-                          <Chip label="Reply" color="info" size="small" />{" "}
-                          {(item as Reply).roast_title || `#${item.roast_id}`}
-                        </>
-                      )}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {new Date(item.created_at).toLocaleString()}
-                    </Typography>
-                  </Stack>
+      {/* Table */}
+      {loading ? (
+        <Box textAlign="center" mt={4}>
+          <CircularProgress />
+        </Box>
+      ) : (
+        <Paper sx={{ overflowX: "auto" }}>
+          <Table size="small" stickyHeader>
+            <TableHead>
+              <TableRow sx={{ bgcolor: "grey.100" }}>
+                {rows[0] &&
+                  Object.keys(rows[0])
+                    .filter((key) => !["profile_url", "photo_url"].includes(key))
+                    .map((key) => (
+                      <TableCell key={key} sx={{ fontWeight: 600 }}>
+                        {key === "shop_id" && selectedTable === "girls"
+                          ? "shop"
+                          : key}
+                      </TableCell>
+                    ))}
+                {selectedTable === "girls" && (
+                  <TableCell sx={{ fontWeight: 600 }}>Actions</TableCell>
+                )}
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {rows.map((row, i) => (
+                <TableRow
+                  key={i}
+                  sx={{
+                    bgcolor: i % 2 === 0 ? "background.paper" : "grey.50",
+                  }}
+                >
+                  {Object.entries(row)
+                    .filter(([key]) => !["profile_url", "photo_url"].includes(key))
+                    .map(([key, val], j) => {
+                      let display = val;
+                      if (
+                        selectedTable === "girls" &&
+                        key === "shop_id" &&
+                        typeof val === "number" &&
+                        shops[val]
+                      ) {
+                        display = shops[val];
+                      }
+                      return (
+                        <TableCell
+                          key={j}
+                          sx={{
+                            whiteSpace: "nowrap",
+                            maxWidth: 220,
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            cursor: "pointer",
+                          }}
+                          title={String(display)}
+                          onClick={() =>
+                            navigator.clipboard.writeText(String(display))
+                          }
+                        >
+                          {String(display)}
+                        </TableCell>
+                      );
+                    })}
 
-                  {item.type === "reply" && (
-                    <>
-                      {(item as Reply).rating && (
-                        <Typography variant="body2">
-                          ⭐ {(item as Reply).rating?.toFixed(1)}
-                        </Typography>
-                      )}
-                      <Typography variant="body2" sx={{ mt: 0.5 }}>
-                        {(item as Reply).comment || "—"}
-                      </Typography>
-                    </>
+                  {selectedTable === "girls" && (
+                    <TableCell>
+                      <Stack direction="row" spacing={1}>
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          onClick={() => handleEditGirl(row)}
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                          size="small"
+                          color="error"
+                          variant="outlined"
+                          onClick={() => handleDeleteGirl(row)}
+                        >
+                          Delete
+                        </Button>
+                      </Stack>
+                    </TableCell>
                   )}
-
-                  {item.type === "roast" && (
-                    <Typography variant="body2" color="text.secondary">
-                      Heat: 🔥 {(item as Roast).heat}
-                    </Typography>
-                  )}
-
-                  <Divider sx={{ my: 1 }} />
-                  <Button
-                    size="small"
-                    color="error"
-                    variant="outlined"
-                    onClick={() =>
-                      item.type === "roast"
-                        ? deleteRoast(item.id)
-                        : deleteReply(item.id)
-                    }
-                  >
-                    Delete
-                  </Button>
-                </Paper>
+                </TableRow>
               ))}
-              {feed.length === 0 && (
-                <Typography color="text.secondary">
-                  No posts or replies yet 🐔
-                </Typography>
-              )}
-            </Stack>
-          )}
-        </Box>
+            </TableBody>
+          </Table>
+        </Paper>
       )}
 
-      {/* BLOG POSTS */}
-      {tab === 2 && (
-        <Box>
-          <Typography variant="h6" gutterBottom>
-            Blog Posts
-          </Typography>
+      {/* Pagination */}
+      <Stack
+        direction="row"
+        justifyContent="space-between"
+        alignItems="center"
+        sx={{ mt: 2 }}
+      >
+        <Typography variant="body2">
+          Page {page} / {Math.max(1, Math.ceil(total / limit))} — {total} total
+        </Typography>
+        <Stack direction="row" spacing={1}>
+          <Button disabled={page === 1} onClick={() => setPage(page - 1)}>
+            Prev
+          </Button>
+          <Button
+            disabled={page * limit >= total}
+            onClick={() => setPage(page + 1)}
+          >
+            Next
+          </Button>
+        </Stack>
+      </Stack>
 
-          <Stack spacing={2} sx={{ mb: 3 }}>
-            <TextField
-              label="Title"
-              value={newTitle}
-              onChange={(e) => setNewTitle(e.target.value)}
-            />
-            <TextField
-              label="Content (Markdown supported)"
-              multiline
-              rows={6}
-              value={newContent}
-              onChange={(e) => setNewContent(e.target.value)}
-            />
-            <Button
-              variant="contained"
-              onClick={createPost}
-              disabled={!newTitle || !newContent}
-            >
-              Post
-            </Button>
-          </Stack>
-
-          {newContent && (
-            <Paper sx={{ p: 2, mb: 3 }}>
-              <Typography variant="subtitle1">Preview</Typography>
-              <Divider sx={{ mb: 2 }} />
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                {newContent}
-              </ReactMarkdown>
-            </Paper>
-          )}
-
-          {successMsg && (
-            <Typography color="success.main">{successMsg}</Typography>
-          )}
-          {errorMsg && (
-            <Typography color="error.main">{errorMsg}</Typography>
-          )}
-
-          {loadingPosts ? (
-            <Box textAlign="center" mt={4}>
-              <CircularProgress />
-            </Box>
-          ) : (
-            <Stack spacing={2}>
-              {posts.map((p) => (
-                <Paper key={p.id} sx={{ p: 2 }}>
-                  <Typography variant="h6">{p.title}</Typography>
-                  <Divider sx={{ my: 1 }} />
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                    {p.content}
-                  </ReactMarkdown>
-                  <Typography variant="caption" color="text.secondary">
-                    {new Date(p.created_at).toLocaleString()}
-                  </Typography>
-                  <Button
-                    size="small"
-                    color="error"
-                    variant="outlined"
-                    onClick={() => deletePost(p.id)}
-                    sx={{ mt: 1 }}
-                  >
-                    Delete
-                  </Button>
-                </Paper>
-              ))}
-            </Stack>
-          )}
-        </Box>
-      )}
+      {/* Edit Modal */}
+      <Dialog open={!!editingGirl} onClose={() => setEditingGirl(null)}>
+        <DialogTitle>Edit Girl</DialogTitle>
+        <DialogContent>
+          <TextField
+            label="Name"
+            fullWidth
+            margin="dense"
+            value={editName}
+            onChange={(e) => setEditName(e.target.value)}
+          />
+          <TextField
+            label="Origin"
+            fullWidth
+            margin="dense"
+            value={editOrigin}
+            onChange={(e) => setEditOrigin(e.target.value)}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setEditingGirl(null)}>Cancel</Button>
+          <Button onClick={saveEditGirl} variant="contained">
+            Save
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

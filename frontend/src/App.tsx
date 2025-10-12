@@ -1,6 +1,8 @@
 // src/App.tsx
 import { useEffect } from "react";
 import { Routes, Route } from "react-router-dom";
+import { API_BASE } from "./config";
+
 import HomePage from "./pages/HomePage";
 import HelpPage from "./pages/HelpPage";
 import BlogPage from "./pages/BlogPage";
@@ -11,7 +13,10 @@ import AdminPage from "./pages/AdminPage";
 import DataPage from "./pages/DataPage";
 import RoastHome from "./pages/RoastHome";
 import RoastView from "./pages/RoastView";
-import { API_BASE } from "./config";
+import EmploymentPage from "./pages/EmploymentPage";
+import EmploymentGirlPage from "./pages/EmploymentGirlPage";
+import EmploymentReceptionPage from "./pages/EmploymentReceptionPage";
+
 
 export default function App() {
   // 🔹 track visit once per app load
@@ -32,6 +37,9 @@ export default function App() {
       <Route path="/data" element={<Layout><DataPage /></Layout>} />
       <Route path="/roast" element={<Layout><RoastHome /></Layout>} />
       <Route path="/roast/:id" element={<Layout><RoastView /></Layout>} />
+      <Route path="employment" element={<Layout><EmploymentPage /></Layout>} />
+      <Route path="employment/girls" element={<Layout><EmploymentGirlPage /></Layout>} />
+      <Route path="employment/reception" element={<Layout><EmploymentReceptionPage /></Layout>} />
 
     </Routes>
   );
