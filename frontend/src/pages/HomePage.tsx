@@ -118,7 +118,7 @@ const filtered = useMemo(() => {
         lineHeight: 1.6,
       }}
     >
-      <strong>The Rotisserie</strong> — Sydney’s hottest roster feed 🔥<br />
+      <strong>The Rotisserie</strong> Sydney’s hottest roster feed 🔥<br />
       <span style={{ opacity: 0.8 }}>
         Browse, compare, and filter daily rosters — updated nightly.
       </span>
