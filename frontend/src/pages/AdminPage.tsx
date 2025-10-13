@@ -21,6 +21,7 @@ import {
   DialogContent,
   DialogActions,
   TextField,
+  Pagination,
 } from "@mui/material";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import FiltersBar, { Filters } from "../components/FiltersBar";
@@ -42,10 +43,11 @@ export default function AdminPage() {
   const [token, setToken] = useState<string | null>(
     localStorage.getItem("admin_token")
   );
-  const [selectedTable, setSelectedTable] = useState(TABLES[1]); // default: girls
+  const [selectedTable, setSelectedTable] = useState(TABLES[0]);
   const [rows, setRows] = useState<any[]>([]);
-  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
 
   const [filters, setFilters] = useState<Filters>({
     shop: "",
@@ -54,17 +56,15 @@ export default function AdminPage() {
     layout: "grid",
   });
 
-  const [page, setPage] = useState(1);
-  const limit = 50; // rows per page
+  const [allOrigins, setAllOrigins] = useState<string[]>([]);
+  const [shops, setShops] = useState<Record<number, string>>({});
 
   // --- edit modal state ---
   const [editingGirl, setEditingGirl] = useState<any | null>(null);
   const [editName, setEditName] = useState("");
   const [editOrigin, setEditOrigin] = useState("");
 
-  // --- shop name mapping ---
-  const [shops, setShops] = useState<Record<number, string>>({});
-
+  // --- fetch shop map for id → name ---
   useEffect(() => {
     if (!token) return;
     (async () => {
@@ -83,24 +83,28 @@ export default function AdminPage() {
     })();
   }, [token]);
 
-  // --- Fetch table with filters + pagination ---
+  // --- fetch data ---
   const fetchTable = async () => {
     if (!token) return;
     setLoading(true);
     try {
-      const res = await axios.get(`/api/admin/table`, {
+      const params: any = {
+        name: selectedTable,
+        page,
+        limit: 25,
+        sort: filters.sort,
+      };
+      if (filters.shop) params.shop = filters.shop;
+      if (filters.origin) params.origin = filters.origin;
+
+      const res = await axios.get("/api/admin/table", {
         headers: { Authorization: `Bearer ${token}` },
-        params: {
-          name: selectedTable,
-          shop: filters.shop || undefined,
-          origin: filters.origin || undefined,
-          sort: filters.sort || "id-desc",
-          page,
-          limit,
-        },
+        params,
       });
+
       setRows(res.data.rows);
-      setTotal(res.data.total || 0);
+      setTotal(res.data.total);
+      if (res.data.allOrigins) setAllOrigins(res.data.allOrigins);
     } catch (err) {
       console.error("fetch table fail", err);
     } finally {
@@ -126,7 +130,7 @@ export default function AdminPage() {
     }
   };
 
-  // --- Edit girl handlers ---
+  // --- edit + delete ---
   const handleEditGirl = (girl: any) => {
     setEditingGirl(girl);
     setEditName(girl.name || "");
@@ -141,13 +145,11 @@ export default function AdminPage() {
         { name: editName, origin: editOrigin },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-
       setRows((prev) =>
         prev.map((r) =>
           r.id === editingGirl.id ? { ...r, ...res.data.updated } : r
         )
       );
-
       setEditingGirl(null);
     } catch (err) {
       console.error("update girl fail", err);
@@ -155,7 +157,6 @@ export default function AdminPage() {
     }
   };
 
-  // --- Delete girl handler ---
   const handleDeleteGirl = async (girl: any) => {
     if (!window.confirm(`Delete ${girl.name}?`)) return;
     try {
@@ -169,7 +170,7 @@ export default function AdminPage() {
     }
   };
 
-  // --- Login screen ---
+  // --- login UI ---
   if (!token) {
     return (
       <Box sx={{ maxWidth: 400, mx: "auto", mt: 8 }}>
@@ -196,17 +197,16 @@ export default function AdminPage() {
     );
   }
 
-  // --- UI ---
+  // --- main UI ---
   return (
     <Box sx={{ maxWidth: 1200, mx: "auto", py: 4 }}>
-      {/* Header */}
       <Stack
         direction="row"
         alignItems="center"
         justifyContent="space-between"
         sx={{ mb: 2 }}
       >
-        <Typography variant="h4">Admin Dashboard</Typography>
+        <Typography variant="h4">Database Tables</Typography>
         <Tooltip title="Refresh">
           <IconButton onClick={fetchTable}>
             <RefreshIcon />
@@ -214,7 +214,6 @@ export default function AdminPage() {
         </Tooltip>
       </Stack>
 
-      {/* Table selector */}
       <Stack direction="row" spacing={1} sx={{ mb: 2, flexWrap: "wrap" }}>
         {TABLES.map((t) => (
           <Chip
@@ -229,135 +228,127 @@ export default function AdminPage() {
         ))}
       </Stack>
 
-      {/* Filters only when "girls" selected */}
       {selectedTable === "girls" && (
         <Box sx={{ mb: 2 }}>
           <FiltersBar
             value={filters}
-            onChange={setFilters}
+            onChange={(f) => {
+              setFilters(f);
+              setPage(1);
+            }}
             shops={Object.values(shops)}
-            origins={[...new Set(rows.map((r) => r.origin).filter(Boolean))]}
+            origins={allOrigins}
           />
         </Box>
       )}
 
-      {/* Table */}
       {loading ? (
         <Box textAlign="center" mt={4}>
           <CircularProgress />
         </Box>
       ) : (
-        <Paper sx={{ overflowX: "auto" }}>
-          <Table size="small" stickyHeader>
-            <TableHead>
-              <TableRow sx={{ bgcolor: "grey.100" }}>
-                {rows[0] &&
-                  Object.keys(rows[0])
-                    .filter((key) => !["profile_url", "photo_url"].includes(key))
-                    .map((key) => (
-                      <TableCell key={key} sx={{ fontWeight: 600 }}>
-                        {key === "shop_id" && selectedTable === "girls"
-                          ? "shop"
-                          : key}
-                      </TableCell>
-                    ))}
-                {selectedTable === "girls" && (
-                  <TableCell sx={{ fontWeight: 600 }}>Actions</TableCell>
-                )}
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {rows.map((row, i) => (
-                <TableRow
-                  key={i}
-                  sx={{
-                    bgcolor: i % 2 === 0 ? "background.paper" : "grey.50",
-                  }}
-                >
-                  {Object.entries(row)
-                    .filter(([key]) => !["profile_url", "photo_url"].includes(key))
-                    .map(([key, val], j) => {
-                      let display = val;
-                      if (
-                        selectedTable === "girls" &&
-                        key === "shop_id" &&
-                        typeof val === "number" &&
-                        shops[val]
-                      ) {
-                        display = shops[val];
-                      }
-                      return (
-                        <TableCell
-                          key={j}
-                          sx={{
-                            whiteSpace: "nowrap",
-                            maxWidth: 220,
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            cursor: "pointer",
-                          }}
-                          title={String(display)}
-                          onClick={() =>
-                            navigator.clipboard.writeText(String(display))
-                          }
-                        >
-                          {String(display)}
+        <>
+          <Paper sx={{ overflowX: "auto", maxHeight: 700 }}>
+            <Table size="small" stickyHeader>
+              <TableHead>
+                <TableRow sx={{ bgcolor: "grey.100" }}>
+                  {rows[0] &&
+                    Object.keys(rows[0])
+                      .filter(
+                        (key) => !["profile_url", "photo_url"].includes(key)
+                      )
+                      .map((key) => (
+                        <TableCell key={key} sx={{ fontWeight: 600 }}>
+                          {key === "shop_id" && selectedTable === "girls"
+                            ? "shop"
+                            : key}
                         </TableCell>
-                      );
-                    })}
-
+                      ))}
                   {selectedTable === "girls" && (
-                    <TableCell>
-                      <Stack direction="row" spacing={1}>
-                        <Button
-                          size="small"
-                          variant="outlined"
-                          onClick={() => handleEditGirl(row)}
-                        >
-                          Edit
-                        </Button>
-                        <Button
-                          size="small"
-                          color="error"
-                          variant="outlined"
-                          onClick={() => handleDeleteGirl(row)}
-                        >
-                          Delete
-                        </Button>
-                      </Stack>
-                    </TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Actions</TableCell>
                   )}
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </Paper>
+              </TableHead>
+
+              <TableBody>
+                {rows.map((row, i) => (
+                  <TableRow
+                    key={i}
+                    sx={{
+                      bgcolor: i % 2 === 0 ? "background.paper" : "grey.50",
+                    }}
+                  >
+                    {Object.entries(row)
+                      .filter(([key]) => !["profile_url", "photo_url"].includes(key))
+                      .map(([key, val], j) => {
+                        let display = val;
+                        if (
+                          selectedTable === "girls" &&
+                          key === "shop_id" &&
+                          typeof val === "number" &&
+                          shops[val]
+                        ) {
+                          display = shops[val];
+                        }
+                        return (
+                          <TableCell
+                            key={j}
+                            sx={{
+                              whiteSpace: "nowrap",
+                              maxWidth: 220,
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              cursor: "pointer",
+                            }}
+                            title={String(display)}
+                            onClick={() =>
+                              navigator.clipboard.writeText(String(display))
+                            }
+                          >
+                            {String(display)}
+                          </TableCell>
+                        );
+                      })}
+                    {selectedTable === "girls" && (
+                      <TableCell>
+                        <Stack direction="row" spacing={1}>
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            onClick={() => handleEditGirl(row)}
+                          >
+                            Edit
+                          </Button>
+                          <Button
+                            size="small"
+                            color="error"
+                            variant="outlined"
+                            onClick={() => handleDeleteGirl(row)}
+                          >
+                            Delete
+                          </Button>
+                        </Stack>
+                      </TableCell>
+                    )}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </Paper>
+
+          {selectedTable === "girls" && (
+            <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
+              <Pagination
+                count={Math.ceil(total / 25)}
+                page={page}
+                onChange={(_, val) => setPage(val)}
+                color="primary"
+              />
+            </Box>
+          )}
+        </>
       )}
 
-      {/* Pagination */}
-      <Stack
-        direction="row"
-        justifyContent="space-between"
-        alignItems="center"
-        sx={{ mt: 2 }}
-      >
-        <Typography variant="body2">
-          Page {page} / {Math.max(1, Math.ceil(total / limit))} — {total} total
-        </Typography>
-        <Stack direction="row" spacing={1}>
-          <Button disabled={page === 1} onClick={() => setPage(page - 1)}>
-            Prev
-          </Button>
-          <Button
-            disabled={page * limit >= total}
-            onClick={() => setPage(page + 1)}
-          >
-            Next
-          </Button>
-        </Stack>
-      </Stack>
-
-      {/* Edit Modal */}
       <Dialog open={!!editingGirl} onClose={() => setEditingGirl(null)}>
         <DialogTitle>Edit Girl</DialogTitle>
         <DialogContent>
