@@ -5,6 +5,7 @@ import {
   Divider,
   CircularProgress,
   Typography,
+  Box,
 } from "@mui/material";
 import useRosterData from "../hooks/useRosterData";
 import FiltersBar, { Filters } from "../components/FiltersBar";
@@ -106,8 +107,23 @@ const filtered = useMemo(() => {
 
   return (
     <Layout onShuffle={handleShuffle}>
-      <Container maxWidth="lg" disableGutters sx={{ py: 3 }}>
-        <FiltersBar
+      <Container maxWidth="lg" disableGutters sx={{ 
+        py: 0, 
+        fontFamily: "'Inter', 'Roboto', 'Helvetica', 'Arial', sans-serif", // 👈 force it here
+}}>
+        <Box
+      sx={{
+        mb: 3,
+        fontSize: { xs: "0.95rem", md: "1.1rem" },
+        lineHeight: 1.6,
+      }}
+    >
+      <strong>The Rotisserie</strong> — Sydney’s hottest roster feed 🔥<br />
+      <span style={{ opacity: 0.8 }}>
+        Browse, compare, and filter daily rosters — updated nightly.
+      </span>
+    </Box>
+<FiltersBar
           value={filters}
           onChange={setFilters}
           shops={shops}
