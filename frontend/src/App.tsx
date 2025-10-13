@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Routes, Route } from "react-router-dom"; // ← no BrowserRouter here
 import { API_BASE } from "./config";
 import { useAnalytics } from "./hooks/useAnalytics";
 
@@ -29,21 +29,19 @@ export default function App() {
   }, []);
 
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="*" element={<NotFoundPage />} />
-        <Route path="/" element={<HomePage />} />
-        <Route path="/help" element={<Layout><HelpPage /></Layout>} />
-        <Route path="/about" element={<Layout><AboutPage /></Layout>} />
-        <Route path="/blog" element={<Layout><BlogPage /></Layout>} />
-        <Route path="/admin" element={<Layout><AdminPage /></Layout>} />
-        <Route path="/data" element={<Layout><DataPage /></Layout>} />
-        <Route path="/roast" element={<Layout><RoastHome /></Layout>} />
-        <Route path="/roast/:id" element={<Layout><RoastView /></Layout>} />
-        <Route path="/employment" element={<Layout><EmploymentPage /></Layout>} />
-        <Route path="/employment/girls" element={<Layout><EmploymentGirlPage /></Layout>} />
-        <Route path="/employment/reception" element={<Layout><EmploymentReceptionPage /></Layout>} />
-      </Routes>
-    </BrowserRouter>
+    <Routes>
+      <Route path="*" element={<NotFoundPage />} />
+      <Route path="/" element={<HomePage />} />
+      <Route path="/help" element={<Layout><HelpPage /></Layout>} />
+      <Route path="/about" element={<Layout><AboutPage /></Layout>} />
+      <Route path="/blog" element={<Layout><BlogPage /></Layout>} />
+      <Route path="/admin" element={<Layout><AdminPage /></Layout>} />
+      <Route path="/data" element={<Layout><DataPage /></Layout>} />
+      <Route path="/roast" element={<Layout><RoastHome /></Layout>} />
+      <Route path="/roast/:id" element={<Layout><RoastView /></Layout>} />
+      <Route path="/employment" element={<Layout><EmploymentPage /></Layout>} />
+      <Route path="/employment/girls" element={<Layout><EmploymentGirlPage /></Layout>} />
+      <Route path="/employment/reception" element={<Layout><EmploymentReceptionPage /></Layout>} />
+    </Routes>
   );
 }
