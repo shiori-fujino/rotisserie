@@ -17,8 +17,6 @@ import {
   MenuItem,
   CircularProgress,
   Pagination,
-  IconButton,
-  Tooltip,
 } from "@mui/material";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
@@ -211,18 +209,19 @@ export default function GirlsListPage() {
   }, [processed, page]);
 
   return (
-    <Stack spacing={2} sx={{ alignItems: "center", width: "100vw" }}>
-      <Typography variant="h5" sx={{ fontWeight: 600, mb: 1 }}>
-        👩 Girls Leaderboard
-      </Typography>
+    <Stack spacing={2} sx={{ alignItems: "center"}}>
+      <Typography variant="h5" sx={{ fontWeight: 600 }}>
+  👩 Girls — recent first · tap headers to sort
+</Typography>
 
       {/* Filters */}
       <Stack
-        direction={{ xs: "column", sm: "row" }}
-        spacing={2}
-        alignItems="center"
-        sx={{ width: "95vw", maxWidth: 1100 }}
-      >
+  direction="row"
+  spacing={2}
+  alignItems="center"
+  flexWrap="wrap"     // ✅ makes them wrap if too narrow instead of breaking layout
+  sx={{ width: "95vw", maxWidth: 1100, justifyContent: "center" }}
+>
         <FormControl size="small" sx={{ minWidth: 180, flex: 1 }}>
           <InputLabel>Nationality</InputLabel>
           <Select
@@ -289,7 +288,6 @@ export default function GirlsListPage() {
             <Table size="small">
               <TableHead>
                 <TableRow>
-                  <TableCell sx={{ fontWeight: 600 }}>Last Seen</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Name</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Nationality</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>
@@ -323,13 +321,13 @@ export default function GirlsListPage() {
                       transition: "background-color 120ms",
                     }}
                   >
-                    <TableCell>{formatDate(g.last_seen)}</TableCell>
+
                     <TableCell>{g.name || "—"}</TableCell>
                     <TableCell>{normalizeOrigin(g.origin || "—")}</TableCell>
                     <TableCell>{g.views ?? 0}</TableCell>
                     <TableCell>
-                      {g.avg_rating != null ? g.avg_rating.toFixed(1) : "—"}
-                    </TableCell>
+  {g.avg_rating != null ? Number(g.avg_rating).toFixed(1) : "—"}
+</TableCell>
                     <TableCell>
                       {g.shop_slug ? (
                         <Link to={`/shops/${g.shop_slug}`}>{g.shop_name}</Link>

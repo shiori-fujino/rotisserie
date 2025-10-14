@@ -3,26 +3,46 @@ import pool from "../db";
 
 const router = Router();
 
-// GET /api/girls — list all girls w/ shop + stats
 router.get("/", async (_req, res) => {
   try {
     const q = `
-      SELECT
+      SELECT 
         g.id,
         g.name,
         g.origin,
+        g.profile_url,
         s.name AS shop_name,
         s.slug AS shop_slug,
-        MAX(r.date) AS last_seen,
-        ROUND(AVG(gc.rating), 1) AS avg_rating,
-        COUNT(gv.girl_id) AS views
+        r.last_seen,
+        COALESCE(v.views, 0) AS views,
+        COALESCE(rep.avg_rating, 0) AS avg_rating
       FROM girls g
-      LEFT JOIN shops s ON g.shop_id = s.id
-      LEFT JOIN roster_entries r ON r.girl_id = g.id
-      LEFT JOIN girl_comments gc ON gc.girl_id = g.id
-      LEFT JOIN girl_views gv ON gv.girl_id = g.id
-      GROUP BY g.id, s.name, s.slug
-      ORDER BY g.name ASC;
+      LEFT JOIN shops s ON s.id = g.shop_id
+
+      -- 🕓 most recent roster date per girl
+      LEFT JOIN (
+        SELECT girl_id, MAX(date) AS last_seen
+        FROM roster_entries
+        GROUP BY girl_id
+      ) r ON r.girl_id = g.id
+
+      -- 👀 total views per girl
+      LEFT JOIN (
+        SELECT girl_id, SUM(count) AS views
+        FROM girl_views
+        GROUP BY girl_id
+      ) v ON v.girl_id = g.id
+
+      -- ⭐️ average rating per girl (via roasts → replies)
+      LEFT JOIN (
+        SELECT ro.girl_id,
+               ROUND(AVG(rep.rating)::numeric, 1) AS avg_rating
+        FROM roasts ro
+        LEFT JOIN replies rep ON rep.roast_id = ro.id
+        GROUP BY ro.girl_id
+      ) rep ON rep.girl_id = g.id
+
+      ORDER BY r.last_seen DESC NULLS LAST;
     `;
     const { rows } = await pool.query(q);
     res.json(rows);
