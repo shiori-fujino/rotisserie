@@ -44,6 +44,7 @@ interface ShopMini {
 }
 
 const PAGE_SIZE = 25;
+const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:4000";
 
 function SortHeader({
   label,
@@ -109,7 +110,7 @@ export default function GirlsListPage() {
   useEffect(() => {
     setLoading(true);
     setError(null);
-    fetch("/api/girls")
+    fetch(`${API_BASE}/api/girls`)
       .then((r) => r.json())
       .then((data) => {
         if (!Array.isArray(data)) throw new Error("Invalid response");

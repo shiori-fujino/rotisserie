@@ -51,10 +51,11 @@ export default function ShopListPage() {
   const [shops, setShops] = useState<Shop[]>([]);
   const [sortBy, setSortBy] = useState("name");
   const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
+const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:4000";
 
   // Fake data
   useEffect(() => {
-    fetch("/api/shops")
+    fetch(`${API_BASE}/api/shops`)
     .then((res) => res.json())
     .then(setShops)
     .catch(console.error);
