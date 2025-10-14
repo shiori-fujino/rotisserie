@@ -96,11 +96,14 @@ export default function ShopPage() {
       <ShopRosterGrid items={roster} onSelect={setSelectedGirl} />
 
       {selectedGirl && (
-        <GirlModal
-          item={selectedGirl}
-          onClose={() => setSelectedGirl(null)}
-        />
-      )}
+  <GirlModal
+    open={true}
+    onClose={() => setSelectedGirl(null)}
+    girlId={selectedGirl.id}
+    girlName={selectedGirl.name}
+    profileUrl={selectedGirl.profileUrl}
+  />
+)}
 
       {/* ---------- COMMENTS / REVIEWS (optional) ---------- */}
       {/* You can later add <ShopReviews shopId={shop.id} /> here */}
