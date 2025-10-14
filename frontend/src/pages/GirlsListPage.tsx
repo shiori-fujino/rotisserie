@@ -45,17 +45,6 @@ interface ShopMini {
 
 const PAGE_SIZE = 25;
 
-function formatDate(d?: string | null) {
-  if (!d) return "—";
-  const dt = new Date(d);
-  if (Number.isNaN(dt.getTime())) return "—";
-  return dt.toLocaleDateString("en-AU", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
-}
-
 function SortHeader({
   label,
   active,
