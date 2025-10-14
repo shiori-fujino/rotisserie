@@ -1,4 +1,3 @@
-// src/pages/AdminPage.tsx
 import { useEffect, useState } from "react";
 import axios from "axios";
 import {
@@ -22,10 +21,13 @@ import {
   DialogActions,
   TextField,
   Pagination,
+  Tabs,
+  Tab,
 } from "@mui/material";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import FiltersBar, { Filters } from "../components/FiltersBar";
 import { API_BASE } from "../config";
+import ReactMarkdown from "react-markdown";
 
 axios.defaults.baseURL = API_BASE;
 
@@ -59,10 +61,26 @@ export default function AdminPage() {
   const [allOrigins, setAllOrigins] = useState<string[]>([]);
   const [shops, setShops] = useState<Record<number, string>>({});
 
-  // --- edit modal state ---
+  // --- edit girl state ---
   const [editingGirl, setEditingGirl] = useState<any | null>(null);
   const [editName, setEditName] = useState("");
   const [editOrigin, setEditOrigin] = useState("");
+  const [editProfileUrl, setEditProfileUrl] = useState("");
+  const [editPhotoUrl, setEditPhotoUrl] = useState("");
+
+  // --- edit shop state ---
+  const [editingShop, setEditingShop] = useState<any | null>(null);
+  const [editShopName, setEditShopName] = useState("");
+  const [editShopAddress, setEditShopAddress] = useState("");
+  const [editShopWebsite, setEditShopWebsite] = useState("");
+  const [editLat, setEditLat] = useState("");
+  const [editLng, setEditLng] = useState("");
+
+  // --- blog composer state ---
+  const [blogTitle, setBlogTitle] = useState("");
+  const [blogContent, setBlogContent] = useState("");
+  const [blogTab, setBlogTab] = useState(0);
+  const [blogSaving, setBlogSaving] = useState(false);
 
   // --- fetch shop map for id → name ---
   useEffect(() => {
@@ -130,32 +148,41 @@ export default function AdminPage() {
     }
   };
 
-  // --- edit + delete ---
+  // --- edit girl handlers ---
   const handleEditGirl = (girl: any) => {
     setEditingGirl(girl);
     setEditName(girl.name || "");
     setEditOrigin(girl.origin || "");
+    setEditProfileUrl(girl.profile_url || "");
+    setEditPhotoUrl(girl.photo_url || "");
   };
 
   const saveEditGirl = async () => {
-    if (!editingGirl) return;
-    try {
-      const res = await axios.patch(
-        `/api/admin/girl/${editingGirl.id}`,
-        { name: editName, origin: editOrigin },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      setRows((prev) =>
-        prev.map((r) =>
-          r.id === editingGirl.id ? { ...r, ...res.data.updated } : r
-        )
-      );
-      setEditingGirl(null);
-    } catch (err) {
-      console.error("update girl fail", err);
-      alert("Failed to update girl.");
-    }
-  };
+  if (!editingGirl) return;
+  try {
+    const res = await axios.patch(
+      `/api/admin/girl/${editingGirl.id}`,
+      {
+        name: editName,
+        origin: editOrigin,
+        profile_url: editProfileUrl,
+        photo_url: editPhotoUrl,
+      },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    setRows((prev) =>
+      prev.map((r) =>
+        r.id === editingGirl.id ? { ...r, ...res.data.updated } : r
+      )
+    );
+    setEditingGirl(null);
+  } catch (err) {
+    console.error("update girl fail", err);
+    alert("Failed to update girl.");
+  }
+};
+
 
   const handleDeleteGirl = async (girl: any) => {
     if (!window.confirm(`Delete ${girl.name}?`)) return;
@@ -167,6 +194,75 @@ export default function AdminPage() {
     } catch (err) {
       console.error("delete girl fail", err);
       alert("Failed to delete girl.");
+    }
+  };
+
+  // --- edit shop handlers ---
+  const handleEditShop = (shop: any) => {
+    setEditingShop(shop);
+    setEditShopName(shop.name || "");
+    setEditShopAddress(shop.address || "");
+    setEditShopWebsite(shop.website || "");
+    setEditLat(shop.lat ?? "");
+    setEditLng(shop.lng ?? "");
+  };
+
+  const saveEditShop = async () => {
+    if (!editingShop) return;
+    try {
+      let website = editShopWebsite.trim();
+      if (website && !/^https?:\/\//i.test(website)) {
+        website = "https://" + website;
+      }
+      const res = await axios.patch(
+        `/api/admin/shop/${editingShop.id}`,
+        {
+          name: editShopName.trim(),
+          address: editShopAddress.trim(),
+          website,
+          lat: parseFloat(editLat) || null,
+          lng: parseFloat(editLng) || null,
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setRows((prev) =>
+        prev.map((r) =>
+          r.id === editingShop.id ? { ...r, ...res.data.updated } : r
+        )
+      );
+      setEditingShop(null);
+    } catch (err) {
+      console.error("update shop fail", err);
+      alert("Failed to update shop.");
+    }
+  };
+
+  // --- blog save draft / publish ---
+  const handleSaveBlog = async (isDraft: boolean) => {
+    if (!blogTitle.trim() || !blogContent.trim()) {
+      alert("Please fill in both title and content");
+      return;
+    }
+    setBlogSaving(true);
+    try {
+      await axios.post(
+        "/api/blog",
+        {
+          title: blogTitle.trim(),
+          content: blogContent.trim(),
+          status: isDraft ? "draft" : "published",
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      alert(isDraft ? "Draft saved!" : "Blog post published!");
+      setBlogTitle("");
+      setBlogContent("");
+      fetchTable();
+    } catch (err) {
+      console.error("blog save fail", err);
+      alert("Failed to save blog post.");
+    } finally {
+      setBlogSaving(false);
     }
   };
 
@@ -200,12 +296,7 @@ export default function AdminPage() {
   // --- main UI ---
   return (
     <Box sx={{ maxWidth: 1200, mx: "auto", py: 4 }}>
-      <Stack
-        direction="row"
-        alignItems="center"
-        justifyContent="space-between"
-        sx={{ mb: 2 }}
-      >
+      <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
         <Typography variant="h4">Database Tables</Typography>
         <Tooltip title="Refresh">
           <IconButton onClick={fetchTable}>
@@ -254,17 +345,13 @@ export default function AdminPage() {
                 <TableRow sx={{ bgcolor: "grey.100" }}>
                   {rows[0] &&
                     Object.keys(rows[0])
-                      .filter(
-                        (key) => !["profile_url", "photo_url"].includes(key)
-                      )
+                      .filter((key) => !["profile_url", "photo_url"].includes(key))
                       .map((key) => (
                         <TableCell key={key} sx={{ fontWeight: 600 }}>
-                          {key === "shop_id" && selectedTable === "girls"
-                            ? "shop"
-                            : key}
+                          {key === "shop_id" && selectedTable === "girls" ? "shop" : key}
                         </TableCell>
                       ))}
-                  {selectedTable === "girls" && (
+                  {(selectedTable === "girls" || selectedTable === "shops") && (
                     <TableCell sx={{ fontWeight: 600 }}>Actions</TableCell>
                   )}
                 </TableRow>
@@ -272,12 +359,7 @@ export default function AdminPage() {
 
               <TableBody>
                 {rows.map((row, i) => (
-                  <TableRow
-                    key={i}
-                    sx={{
-                      bgcolor: i % 2 === 0 ? "background.paper" : "grey.50",
-                    }}
-                  >
+                  <TableRow key={i} sx={{ bgcolor: i % 2 === 0 ? "background.paper" : "grey.50" }}>
                     {Object.entries(row)
                       .filter(([key]) => !["profile_url", "photo_url"].includes(key))
                       .map(([key, val], j) => {
@@ -301,9 +383,7 @@ export default function AdminPage() {
                               cursor: "pointer",
                             }}
                             title={String(display)}
-                            onClick={() =>
-                              navigator.clipboard.writeText(String(display))
-                            }
+                            onClick={() => navigator.clipboard.writeText(String(display))}
                           >
                             {String(display)}
                           </TableCell>
@@ -312,11 +392,7 @@ export default function AdminPage() {
                     {selectedTable === "girls" && (
                       <TableCell>
                         <Stack direction="row" spacing={1}>
-                          <Button
-                            size="small"
-                            variant="outlined"
-                            onClick={() => handleEditGirl(row)}
-                          >
+                          <Button size="small" variant="outlined" onClick={() => handleEditGirl(row)}>
                             Edit
                           </Button>
                           <Button
@@ -330,13 +406,22 @@ export default function AdminPage() {
                         </Stack>
                       </TableCell>
                     )}
+                    {selectedTable === "shops" && (
+                      <TableCell>
+                        <Stack direction="row" spacing={1}>
+                          <Button size="small" variant="outlined" onClick={() => handleEditShop(row)}>
+                            Edit
+                          </Button>
+                        </Stack>
+                      </TableCell>
+                    )}
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
           </Paper>
 
-          {selectedTable === "girls" && (
+          {(selectedTable === "girls" || selectedTable === "shops") && (
             <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
               <Pagination
                 count={Math.ceil(total / 25)}
@@ -349,27 +434,142 @@ export default function AdminPage() {
         </>
       )}
 
-      <Dialog open={!!editingGirl} onClose={() => setEditingGirl(null)}>
-        <DialogTitle>Edit Girl</DialogTitle>
+      {/* --- Blog Composer --- */}
+      {selectedTable === "blog_posts" && (
+        <Box sx={{ mt: 4 }}>
+          <Typography variant="h5" gutterBottom>
+            ✏️ Write a New Blog Post
+          </Typography>
+          <Tabs value={blogTab} onChange={(_, val) => setBlogTab(val)} sx={{ mb: 2 }}>
+            <Tab label="Edit" />
+            <Tab label="Preview" />
+          </Tabs>
+
+          {blogTab === 0 && (
+            <Stack spacing={2}>
+              <TextField label="Title" fullWidth value={blogTitle} onChange={(e) => setBlogTitle(e.target.value)} />
+              <TextField
+                label="Content (Markdown supported)"
+                fullWidth
+                multiline
+                minRows={10}
+                value={blogContent}
+                onChange={(e) => setBlogContent(e.target.value)}
+              />
+              <Stack direction="row" spacing={2}>
+                <Button variant="outlined" onClick={() => handleSaveBlog(true)} disabled={blogSaving}>
+                  Save Draft
+                </Button>
+                <Button variant="contained" onClick={() => handleSaveBlog(false)} disabled={blogSaving}>
+                  Publish
+                </Button>
+              </Stack>
+            </Stack>
+          )}
+
+          {blogTab === 1 && (
+            <Paper sx={{ p: 2, minHeight: 300 }}>
+              <Typography variant="h6" gutterBottom>
+                {blogTitle || "(untitled)"}
+              </Typography>
+              <ReactMarkdown>{blogContent || "_Nothing yet..._"}</ReactMarkdown>
+            </Paper>
+          )}
+        </Box>
+      )}
+
+      {/* --- Edit Girl Modal --- */}
+      {/* --- Edit Girl Modal --- */}
+<Dialog open={!!editingGirl} onClose={() => setEditingGirl(null)} maxWidth="sm" fullWidth>
+  <DialogTitle>Edit Girl</DialogTitle>
+  <DialogContent>
+    <TextField
+      label="Name"
+      fullWidth
+      margin="dense"
+      value={editName}
+      onChange={(e) => setEditName(e.target.value)}
+    />
+    <TextField
+      label="Origin"
+      fullWidth
+      margin="dense"
+      value={editOrigin}
+      onChange={(e) => setEditOrigin(e.target.value)}
+    />
+    <TextField
+      label="Profile URL"
+      fullWidth
+      margin="dense"
+      value={editProfileUrl}
+      onChange={(e) => setEditProfileUrl(e.target.value)}
+      helperText="Edit or paste new link (e.g. https://45granville.com.au/j-tomomi/)"
+    />
+    <TextField
+      label="Photo URL"
+      fullWidth
+      margin="dense"
+      value={editPhotoUrl}
+      onChange={(e) => setEditPhotoUrl(e.target.value)}
+    />
+  </DialogContent>
+  <DialogActions>
+    <Button onClick={() => setEditingGirl(null)}>Cancel</Button>
+    <Button onClick={saveEditGirl} variant="contained">
+      Save
+    </Button>
+  </DialogActions>
+</Dialog>
+
+
+      {/* --- Edit Shop Modal --- */}
+      <Dialog open={!!editingShop} onClose={() => setEditingShop(null)} maxWidth="sm" fullWidth>
+        <DialogTitle>Edit Shop</DialogTitle>
         <DialogContent>
           <TextField
             label="Name"
             fullWidth
             margin="dense"
-            value={editName}
-            onChange={(e) => setEditName(e.target.value)}
+            value={editShopName}
+            onChange={(e) => setEditShopName(e.target.value)}
           />
           <TextField
-            label="Origin"
+            label="Address"
             fullWidth
             margin="dense"
-            value={editOrigin}
-            onChange={(e) => setEditOrigin(e.target.value)}
+            multiline
+            minRows={2}
+            value={editShopAddress}
+            onChange={(e) => setEditShopAddress(e.target.value)}
           />
+          <TextField
+            label="Website"
+            fullWidth
+            margin="dense"
+            value={editShopWebsite}
+            onChange={(e) => setEditShopWebsite(e.target.value)}
+            helperText="Automatically adds https:// if missing"
+          />
+          <Stack direction="row" spacing={2}>
+        <TextField
+          label="Latitude"
+          type="number"
+          fullWidth
+          value={editLat}
+          onChange={(e) => setEditLat(e.target.value)}
+        />
+        <TextField
+          label="Longitude"
+          type="number"
+          fullWidth
+          value={editLng}
+          onChange={(e) => setEditLng(e.target.value)}
+        />
+      </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setEditingGirl(null)}>Cancel</Button>
-          <Button onClick={saveEditGirl} variant="contained">
+          <Button onClick={() => setEditingShop(null)}>Cancel</Button>
+          <Button onClick={saveEditShop} variant="contained">
             Save
           </Button>
         </DialogActions>

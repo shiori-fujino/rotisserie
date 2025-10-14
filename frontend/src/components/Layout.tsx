@@ -8,7 +8,7 @@ import {
   Link as MuiLink,
 } from "@mui/material";
 import RefreshIcon from "@mui/icons-material/Refresh";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 
 export default function Layout({
   children,
@@ -17,6 +17,9 @@ export default function Layout({
   children: React.ReactNode;
   onShuffle?: () => void;
 }) {
+  const location = useLocation();
+  const isActive = (path: string) => location.pathname.startsWith(path);
+
   return (
     <Box
       sx={{
@@ -26,97 +29,92 @@ export default function Layout({
         flexDirection: "column",
       }}
     >
-{/* Top Nav — German Engineering Edition */}
-<AppBar
-  position="sticky"
-  color="transparent"
-  elevation={0}
-  sx={{
-    backdropFilter: "blur(6px)",
-    borderBottom: "1px solid rgba(0,0,0,0.08)",
-    bgcolor: "rgba(255,255,255,0.75)",
-  }}
->
-  <Toolbar
-    sx={{
-      display: "flex",
-      justifyContent: "space-between", // 🔥 key difference
-      alignItems: "center",
-      px: { xs: 1.5, sm: 3 },
-    }}
-  >
-    {/* Left: Home / Date */}
-    <Typography
-      variant="h6"
-      onClick={() => (window.location.href = "/")}
-      sx={{
-        fontWeight: 700,
-        fontFamily: "Inter, Roboto, sans-serif",
-        color: "text.primary",
-        cursor: "pointer",
-        "&:hover": { color: "#e65100" },
-        flexShrink: 0, // stops shrinking on mobile
-      }}
-    >
-      {new Date().toLocaleString("en-AU", {
-        weekday: "short",
-        day: "numeric",
-        month: "long",
-      })}{" "}
-      🐓
-    </Typography>
-
-    {/* Right: Menu items */}
-    <Box
-      sx={{
-        display: "flex",
-        alignItems: "center",
-        gap: { xs: 1, sm: 2 },
-        flexShrink: 0,
-      }}
-    >
-      <Button
-        color="inherit"
-        component={Link}
-        to="/about"
-        sx={{ textTransform: "none", fontWeight: 500 }}
-      >
-        About
-      </Button>
-      <Button
-        color="inherit"
-        component={Link}
-        to="/help"
-        sx={{ textTransform: "none", fontWeight: 500 }}
-      >
-        Help
-      </Button>
-      <Button
-        color="inherit"
-        component={Link}
-        to="/roast"
+      {/* 🔝 Top Navbar — Gen-Z German Engineering */}
+      <AppBar
+        position="sticky"
+        color="transparent"
+        elevation={0}
         sx={{
-          textTransform: "none",
-          fontWeight: 600,
-          color: "#e65100",
+          backdropFilter: "blur(6px)",
+          borderBottom: "1px solid rgba(0,0,0,0.08)",
+          bgcolor: "rgba(255,255,255,0.75)",
         }}
       >
-        Roasting...
-      </Button>
+        <Toolbar
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            px: { xs: 1.5, sm: 3 },
+          }}
+        >
+          {/* Left: Date logo */}
+          <Typography
+            variant="h6"
+            onClick={() => (window.location.href = "/")}
+            sx={{
+              fontWeight: 700,
+              fontFamily: "Inter, Roboto, sans-serif",
+              color: "text.primary",
+              cursor: "pointer",
+              "&:hover": { color: "#e65100" },
+              flexShrink: 0,
+              fontSize: { xs: "1rem", sm: "1.1rem" },
+            }}
+          >
+            {new Date().toLocaleString("en-AU", {
+              weekday: "short",
+              day: "numeric",
+              month: "long",
+            })}{" "}
+            🐓
+          </Typography>
 
-      {onShuffle && (
-        <IconButton onClick={onShuffle} sx={{ color: "text.secondary" }}>
-          <RefreshIcon fontSize="small" />
-        </IconButton>
-      )}
-    </Box>
-  </Toolbar>
-</AppBar>
+          {/* Right: Main nav */}
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: { xs: 0.5, sm: 2 },
+              flexShrink: 0,
+            }}
+          >
+            {[
+              { label: "Shops", to: "/shops" },
+              { label: "Girls", to: "/girls" },
+              { label: "Roast", to: "/roast" },
+            ].map((link) => (
+              <Button
+                key={link.to}
+                color="inherit"
+                component={Link}
+                to={link.to}
+                sx={{
+                  textTransform: "none",
+                  fontWeight: isActive(link.to) ? 600 : 400,
+                  color: isActive(link.to)
+                    ? "#e65100"
+                    : "text.primary",
+                  "&:hover": { opacity: 0.7 },
+                }}
+              >
+                {link.label}
+              </Button>
+            ))}
 
-      {/* Content area */}
+            {onShuffle && (
+              <IconButton onClick={onShuffle} sx={{ color: "text.secondary" }}>
+                <RefreshIcon fontSize="small" />
+              </IconButton>
+            )}
+          </Box>
+        </Toolbar>
+      </AppBar>
+
+      {/* 🧩 Main Content */}
       <Box sx={{ py: 3, px: 1.5, flex: 1 }}>{children}</Box>
 
-      {/* Footer */}
+      {/* 🦶 Footer — Meta Links */}
       <Box
         component="footer"
         sx={{
@@ -126,22 +124,31 @@ export default function Layout({
           mt: "auto",
         }}
       >
-        <Typography variant="body2" color="text.secondary">
-          © {new Date().getFullYear()} The Rotisserie 🍗 ·{" "}
-          <MuiLink component={Link} to="/blog" color="inherit" underline="hover">
-            Devlog
+        <Typography
+          variant="body2"
+          sx={{
+            color: "text.secondary",
+            fontSize: "0.85rem",
+            textTransform: "lowercase",
+            "& a": { color: "inherit", textDecoration: "none" },
+            "& a:hover": { color: "#e65100" },
+          }}
+        >
+          © {new Date().getFullYear()} the rotisserie ·{" "}
+          <MuiLink component={Link} to="/blog">
+            devlog
           </MuiLink>{" "}
           ·{" "}
-          <MuiLink component={Link} to="/about" color="inherit" underline="hover">
-            About
+          <MuiLink component={Link} to="/about">
+            about
           </MuiLink>{" "}
           ·{" "}
-          <MuiLink component={Link} to="/help" color="inherit" underline="hover">
-            Help
+          <MuiLink component={Link} to="/help">
+            help
           </MuiLink>{" "}
           ·{" "}
-          <MuiLink component={Link} to="/data" color="inherit" underline="hover">
-            Data
+          <MuiLink component={Link} to="/data">
+            data
           </MuiLink>
         </Typography>
       </Box>

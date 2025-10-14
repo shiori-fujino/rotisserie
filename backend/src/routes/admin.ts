@@ -122,5 +122,33 @@ router.delete("/girl/:id", requireAdmin, async (req, res) => {
     res.status(500).json({ error: "Delete failed" });
   }
 });
+/* -------------------- PATCH /api/admin/shop/:id -------------------- */
+router.patch("/shop/:id", requireAdmin, async (req, res) => {
+  const { id } = req.params;
+  const { name, canonical_url, address, lat, lng } = req.body;
 
+  try {
+    const q = `
+      UPDATE shops
+      SET
+        name = COALESCE($1, name),
+        canonical_url = COALESCE($2, canonical_url),
+        address = COALESCE($3, address),
+        lat = COALESCE($4, lat),
+        lng = COALESCE($5, lng)
+      WHERE id = $6
+      RETURNING *;
+    `;
+
+    const { rows } = await pool.query(q, [name, canonical_url, address, lat, lng, id]);
+    if (rows.length === 0) {
+      return res.status(404).json({ error: "Shop not found" });
+    }
+
+    res.json({ updated: rows[0] });
+  } catch (err) {
+    console.error("update shop fail", err);
+    res.status(500).json({ error: "Failed to update shop" });
+  }
+});
 export default router;
