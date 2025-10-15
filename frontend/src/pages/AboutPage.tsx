@@ -63,18 +63,6 @@ style={{
   highschooler’s summer project. Strong structure and data come first.
   Sleek animations and sprinkles can wait. If it works, it works. 😎
 </Typography>
-<Typography variant="body2" sx={{ mt: 4 }}>
-  Curious? Check out the code on{" "}
-  <a
-    href="https://github.com/shiori-fujino/rotisserie"
-    target="_blank"
-    rel="noopener noreferrer"
-    style={{ color: "#1976d2", textDecoration: "none", fontWeight: "bold" }}
-  >
-    GitHub
-  </a>
-  .
-</Typography>
 
     </Box>
   );
