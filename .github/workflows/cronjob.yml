@@ -2,7 +2,7 @@ name: Nightly Scraper
 
 on:
   schedule:
-    - cron: "0 14 * * *"  # midnight Sydney (AEST)
+    - cron: "0 23,7,15 * * *"  # every 8th hour 12 AM, 8 AM, 4 PM Sydney
   workflow_dispatch:
 
 jobs:
