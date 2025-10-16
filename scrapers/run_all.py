@@ -19,6 +19,8 @@ SCRAPERS = [
     "ginza_scraper_db.py",
     "ginza479_scraper_db.py",
     "dreamgirl_scraper_db.py",
+    "22rydalmere_scraper_db.py",
+    "45granville_scraper_db.py",
 ]
 
 # ---------- Avia-style shops (Enfold clones) ----------
