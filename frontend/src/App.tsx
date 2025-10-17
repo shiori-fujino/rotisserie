@@ -17,6 +17,7 @@ import EmploymentPage from "./pages/EmploymentPage";
 import EmploymentGirlPage from "./pages/EmploymentGirlPage";
 import EmploymentReceptionPage from "./pages/EmploymentReceptionPage";
 
+import ShopPage from "./pages/ShopPage";
 import ShopListPage from "./pages/ShopListPage";
 import GirlsListPage from "./pages/GirlsListPage";
 
@@ -36,7 +37,7 @@ export default function App() {
     <Routes>
       <Route path="/girls" element={<Layout><GirlsListPage /></Layout>} />
       <Route path="/shops" element={<Layout><ShopListPage /></Layout>} />
-
+      <Route path="/shops/:slug" element={<Layout><ShopPage /></Layout>} />
 
       <Route path="*" element={<NotFoundPage />} />
       <Route path="/" element={<HomePage />} />

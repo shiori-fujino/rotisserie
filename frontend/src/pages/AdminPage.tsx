@@ -69,12 +69,15 @@ export default function AdminPage() {
   const [editPhotoUrl, setEditPhotoUrl] = useState("");
 
   // --- edit shop state ---
-  const [editingShop, setEditingShop] = useState<any | null>(null);
-  const [editShopName, setEditShopName] = useState("");
-  const [editShopAddress, setEditShopAddress] = useState("");
-  const [editShopWebsite, setEditShopWebsite] = useState("");
-  const [editLat, setEditLat] = useState("");
-  const [editLng, setEditLng] = useState("");
+const [editingShop, setEditingShop] = useState<any | null>(null);
+const [editShopName, setEditShopName] = useState("");
+const [editShopAddress, setEditShopAddress] = useState("");
+const [editShopUrl, setEditShopUrl] = useState("");
+const [editShopPhone, setEditShopPhone] = useState("");
+const [editShopArea, setEditShopArea] = useState("");
+const [editLat, setEditLat] = useState("");
+const [editLng, setEditLng] = useState("");
+
 
   // --- blog composer state ---
   const [blogTitle, setBlogTitle] = useState("");
@@ -199,43 +202,49 @@ export default function AdminPage() {
 
   // --- edit shop handlers ---
   const handleEditShop = (shop: any) => {
-    setEditingShop(shop);
-    setEditShopName(shop.name || "");
-    setEditShopAddress(shop.address || "");
-    setEditShopWebsite(shop.website || "");
-    setEditLat(shop.lat ?? "");
-    setEditLng(shop.lng ?? "");
-  };
+  setEditingShop(shop);
+  setEditShopName(shop.name || "");
+  setEditShopAddress(shop.address || "");
+  setEditShopUrl(shop.url || "");          // ✅ matches DB column
+  setEditShopPhone(shop.phone || "");      // ✅ new
+  setEditShopArea(shop.area || "");        // ✅ new
+  setEditLat(shop.lat ?? "");
+  setEditLng(shop.lng ?? "");
+};
+
 
   const saveEditShop = async () => {
-    if (!editingShop) return;
-    try {
-      let website = editShopWebsite.trim();
-      if (website && !/^https?:\/\//i.test(website)) {
-        website = "https://" + website;
-      }
-      const res = await axios.patch(
-        `/api/admin/shop/${editingShop.id}`,
-        {
-          name: editShopName.trim(),
-          address: editShopAddress.trim(),
-          website,
-          lat: parseFloat(editLat) || null,
-          lng: parseFloat(editLng) || null,
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      setRows((prev) =>
-        prev.map((r) =>
-          r.id === editingShop.id ? { ...r, ...res.data.updated } : r
-        )
-      );
-      setEditingShop(null);
-    } catch (err) {
-      console.error("update shop fail", err);
-      alert("Failed to update shop.");
-    }
-  };
+  if (!editingShop) return;
+  try {
+    let url = editShopUrl.trim();
+    if (url && !/^https?:\/\//i.test(url)) url = "https://" + url;
+
+    const res = await axios.patch(
+      `/api/admin/shop/${editingShop.id}`,
+      {
+        name: editShopName.trim(),
+        address: editShopAddress.trim(),
+        url,                                   // ✅ correct field
+        phone: editShopPhone.trim() || null,   // ✅ new
+        area: editShopArea.trim() || null,     // ✅ new
+        lat: parseFloat(editLat) || null,
+        lng: parseFloat(editLng) || null,
+      },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    setRows((prev) =>
+      prev.map((r) =>
+        r.id === editingShop.id ? { ...r, ...res.data.updated } : r
+      )
+    );
+    setEditingShop(null);
+  } catch (err) {
+    console.error("update shop fail", err);
+    alert("Failed to update shop.");
+  }
+};
+
 
   // --- blog save draft / publish ---
   const handleSaveBlog = async (isDraft: boolean) => {
@@ -524,56 +533,75 @@ export default function AdminPage() {
 
       {/* --- Edit Shop Modal --- */}
       <Dialog open={!!editingShop} onClose={() => setEditingShop(null)} maxWidth="sm" fullWidth>
-        <DialogTitle>Edit Shop</DialogTitle>
-        <DialogContent>
-          <TextField
-            label="Name"
-            fullWidth
-            margin="dense"
-            value={editShopName}
-            onChange={(e) => setEditShopName(e.target.value)}
-          />
-          <TextField
-            label="Address"
-            fullWidth
-            margin="dense"
-            multiline
-            minRows={2}
-            value={editShopAddress}
-            onChange={(e) => setEditShopAddress(e.target.value)}
-          />
-          <TextField
-            label="Website"
-            fullWidth
-            margin="dense"
-            value={editShopWebsite}
-            onChange={(e) => setEditShopWebsite(e.target.value)}
-            helperText="Automatically adds https:// if missing"
-          />
-          <Stack direction="row" spacing={2}>
-        <TextField
-          label="Latitude"
-          type="number"
-          fullWidth
-          value={editLat}
-          onChange={(e) => setEditLat(e.target.value)}
-        />
-        <TextField
-          label="Longitude"
-          type="number"
-          fullWidth
-          value={editLng}
-          onChange={(e) => setEditLng(e.target.value)}
-        />
-      </Stack>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setEditingShop(null)}>Cancel</Button>
-          <Button onClick={saveEditShop} variant="contained">
-            Save
-          </Button>
-        </DialogActions>
-      </Dialog>
+  <DialogTitle>Edit Shop</DialogTitle>
+  <DialogContent>
+    <TextField
+      label="Name"
+      fullWidth
+      margin="dense"
+      value={editShopName}
+      onChange={(e) => setEditShopName(e.target.value)}
+    />
+    <TextField
+      label="Address"
+      fullWidth
+      margin="dense"
+      multiline
+      minRows={2}
+      value={editShopAddress}
+      onChange={(e) => setEditShopAddress(e.target.value)}
+    />
+    <TextField
+      label="Website URL"
+      fullWidth
+      margin="dense"
+      value={editShopUrl}
+      onChange={(e) => setEditShopUrl(e.target.value)}
+      helperText="Automatically adds https:// if missing"
+    />
+    <TextField
+      label="Phone"
+      fullWidth
+      margin="dense"
+      value={editShopPhone}
+      onChange={(e) => setEditShopPhone(e.target.value)}
+    />
+    <TextField
+      label="Area / Suburb"
+      fullWidth
+      margin="dense"
+      value={editShopArea}
+      onChange={(e) => setEditShopArea(e.target.value)}
+    />
+    <Stack direction="row" spacing={2}>
+      <TextField
+        label="Latitude"
+        type="number"
+        fullWidth
+        value={editLat}
+        onChange={(e) => setEditLat(e.target.value)}
+      />
+      <TextField
+        label="Longitude"
+        type="number"
+        fullWidth
+        value={editLng}
+        onChange={(e) => setEditLng(e.target.value)}
+      />
+    </Stack>
+  </DialogContent>
+  <DialogActions>
+    <Button onClick={() => setEditingShop(null)}>Cancel</Button>
+    <Button onClick={saveEditShop} variant="contained">
+      Save
+    </Button>
+    <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
+  Last scraped: {editingShop?.last_scraped ? new Date(editingShop.last_scraped).toLocaleString() : "—"}
+</Typography>
+
+  </DialogActions>
+</Dialog>
+
     </Box>
   );
 }

@@ -17,9 +17,12 @@ import {
   MenuItem,
   CircularProgress,
   Pagination,
+  TextField,
+  IconButton,
 } from "@mui/material";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
+import ClearIcon from "@mui/icons-material/Clear";
 import { Link } from "react-router-dom";
 import { normalizeOrigin } from "../utils/normalize";
 
@@ -46,6 +49,7 @@ interface ShopMini {
 const PAGE_SIZE = 25;
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:4000";
 
+/* ---------------- Sort header ---------------- */
 function SortHeader({
   label,
   active,
@@ -73,15 +77,7 @@ function SortHeader({
       onClick={onToggle}
     >
       <Typography variant="body2">{label}</Typography>
-      <Box
-        component="span"
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          opacity: 1,
-          ml: 0.2,
-        }}
-      >
+      <Box component="span" sx={{ display: "flex", alignItems: "center", ml: 0.2 }}>
         {dir === "asc" ? (
           <ArrowUpwardIcon sx={{ fontSize: 16 }} />
         ) : (
@@ -92,6 +88,7 @@ function SortHeader({
   );
 }
 
+/* ---------------- Main page ---------------- */
 export default function GirlsListPage() {
   const [girls, setGirls] = useState<Girl[]>([]);
   const [loading, setLoading] = useState(false);
@@ -100,13 +97,14 @@ export default function GirlsListPage() {
   const [shops, setShops] = useState<ShopMini[]>([]);
   const [filterOrigin, setFilterOrigin] = useState<string>("");
   const [filterShop, setFilterShop] = useState<string>("");
+  const [searchName, setSearchName] = useState<string>("");
 
   const [sortKey, setSortKey] = useState<SortKey>("views");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [isSorting, setIsSorting] = useState(false);
   const [page, setPage] = useState(1);
 
-  // fetch girls
+  /* -------- fetch girls -------- */
   useEffect(() => {
     setLoading(true);
     setError(null);
@@ -120,7 +118,7 @@ export default function GirlsListPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  // fetch shops for filter dropdown
+  /* -------- fetch shops -------- */
   useEffect(() => {
     fetch("/api/shops")
       .then((r) => r.json())
@@ -135,7 +133,7 @@ export default function GirlsListPage() {
       .catch(() => {});
   }, []);
 
-  // unique normalised origins
+  /* -------- unique normalized origins -------- */
   const origins = useMemo(() => {
     const set = new Set<string>();
     girls.forEach((g) => {
@@ -145,7 +143,7 @@ export default function GirlsListPage() {
     return Array.from(set).sort((a, b) => a.localeCompare(b));
   }, [girls]);
 
-  // sorting toggle
+  /* -------- sorting toggle -------- */
   const triggerSort = (key: SortKey) => {
     setIsSorting(true);
     if (sortKey === key) {
@@ -158,31 +156,45 @@ export default function GirlsListPage() {
     setPage(1);
   };
 
-  // process data
+  /* -------- data processing -------- */
   const processed = useMemo(() => {
     let rows = girls.slice();
 
+    // filter by origin
     if (filterOrigin) {
-      rows = rows.filter(
-        (g) => normalizeOrigin(g.origin || "") === filterOrigin
-      );
+      rows = rows.filter((g) => normalizeOrigin(g.origin || "") === filterOrigin);
     }
+
+    // filter by shop
     if (filterShop) {
       rows = rows.filter((g) => g.shop_slug === filterShop);
     }
 
-    rows.sort((a, b) => {
-      const mult = sortDir === "asc" ? 1 : -1;
-      if (sortKey === "views") {
-        return ((a.views ?? 0) - (b.views ?? 0)) * mult;
-      }
-      if (sortKey === "avg_rating") {
-        return ((a.avg_rating ?? 0) - (b.avg_rating ?? 0)) * mult;
-      }
-      return 0;
-    });
+    // search by name (case-insensitive + accent-safe)
+    if (searchName.trim()) {
+      const term = searchName
+        .trim()
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/\p{Diacritic}/gu, "");
+      rows = rows.filter((g) => {
+        const name = (g.name || "")
+          .toLowerCase()
+          .normalize("NFD")
+          .replace(/\p{Diacritic}/gu, "");
+        return name.includes(term);
+      });
+    }
 
-    // fallback: recent activity first
+    // sort
+    const mult = sortDir === "asc" ? 1 : -1;
+    if (sortKey === "views") {
+      rows.sort((a, b) => ((a.views ?? 0) - (b.views ?? 0)) * mult);
+    } else if (sortKey === "avg_rating") {
+      rows.sort((a, b) => ((a.avg_rating ?? 0) - (b.avg_rating ?? 0)) * mult);
+    }
+
+    // fallback: recent first
     rows.sort((a, b) => {
       const ta = a.last_seen ? new Date(a.last_seen).getTime() : 0;
       const tb = b.last_seen ? new Date(b.last_seen).getTime() : 0;
@@ -190,28 +202,50 @@ export default function GirlsListPage() {
     });
 
     return rows;
-  }, [girls, filterOrigin, filterShop, sortKey, sortDir]);
+  }, [girls, filterOrigin, filterShop, searchName, sortKey, sortDir]);
 
+  /* -------- pagination -------- */
   const pageCount = Math.max(1, Math.ceil(processed.length / PAGE_SIZE));
   const pageRows = useMemo(() => {
     const start = (page - 1) * PAGE_SIZE;
     return processed.slice(start, start + PAGE_SIZE);
   }, [processed, page]);
 
+  /* -------- render -------- */
   return (
-    <Stack spacing={2} sx={{ alignItems: "center"}}>
+    <Stack spacing={2} sx={{ alignItems: "center" }}>
       <Typography variant="h5" sx={{ fontWeight: 600 }}>
-  👩 Girls — recent first · tap headers to sort
-</Typography>
+        👩 Girls — recent first · tap headers to sort
+      </Typography>
 
-      {/* Filters */}
+      {/* Filters + search */}
       <Stack
-  direction="row"
-  spacing={2}
-  alignItems="center"
-  flexWrap="wrap"     // ✅ makes them wrap if too narrow instead of breaking layout
-  sx={{ width: "95vw", maxWidth: 1100, justifyContent: "center" }}
->
+        direction="row"
+        spacing={2}
+        alignItems="center"
+        flexWrap="wrap"
+        sx={{ width: "95vw", maxWidth: 1100, justifyContent: "center" }}
+      >
+        {/* Search name */}
+        <Box sx={{ display: "flex", alignItems: "center", flex: 1, minWidth: 220 }}>
+          <TextField
+            size="small"
+            label="Search Name"
+            value={searchName}
+            onChange={(e) => {
+              setSearchName(e.target.value);
+              setPage(1);
+            }}
+            fullWidth
+          />
+          {searchName && (
+            <IconButton size="small" onClick={() => setSearchName("")}>
+              <ClearIcon fontSize="small" />
+            </IconButton>
+          )}
+        </Box>
+
+        {/* Origin filter */}
         <FormControl size="small" sx={{ minWidth: 180, flex: 1 }}>
           <InputLabel>Nationality</InputLabel>
           <Select
@@ -232,6 +266,7 @@ export default function GirlsListPage() {
           </Select>
         </FormControl>
 
+        {/* Shop filter */}
         <FormControl size="small" sx={{ minWidth: 180, flex: 1 }}>
           <InputLabel>Shop</InputLabel>
           <Select
@@ -311,13 +346,12 @@ export default function GirlsListPage() {
                       transition: "background-color 120ms",
                     }}
                   >
-
                     <TableCell>{g.name || "—"}</TableCell>
                     <TableCell>{normalizeOrigin(g.origin || "—")}</TableCell>
                     <TableCell>{g.views ?? 0}</TableCell>
                     <TableCell>
-  {g.avg_rating != null ? Number(g.avg_rating).toFixed(1) : "—"}
-</TableCell>
+                      {g.avg_rating != null ? Number(g.avg_rating).toFixed(1) : "—"}
+                    </TableCell>
                     <TableCell>
                       {g.shop_slug ? (
                         <Link to={`/shops/${g.shop_slug}`}>{g.shop_name}</Link>

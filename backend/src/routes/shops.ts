@@ -1,5 +1,3 @@
-//shops.ts
-
 import { Router } from "express";
 import pool from "../db";
 
@@ -35,12 +33,45 @@ router.get("/", async (_req, res) => {
 router.get("/:slug", async (req, res) => {
   try {
     const { slug } = req.params;
-    const q = `SELECT * FROM shops WHERE slug = $1`;
-    const { rows } = await pool.query(q, [slug]);
-    if (!rows.length) return res.status(404).json({ error: "Shop not found" });
-    res.json(rows[0]);
+    console.log("Fetching shop:", slug);
+
+    const shopRes = await pool.query(
+      `SELECT id, name, slug, address, lat, lng, phone, url, area, last_scraped
+         FROM shops
+        WHERE slug = $1
+        LIMIT 1;`,
+      [slug]
+    );
+    if (shopRes.rows.length === 0)
+      return res.status(404).json({ error: "Shop not found" });
+
+    const shop = shopRes.rows[0];
+    console.log("→ shop found:", shop.id, shop.name);
+
+    // ✅ simplified — no girl_photos join
+    const rosterQ = `
+      SELECT g.id, g.name, g.origin, g.profile_url, g.photo_url
+        FROM roster_entries r
+        JOIN girls g ON g.id = r.girl_id
+       WHERE r.shop_id = $1
+         AND r.date = CURRENT_DATE
+       GROUP BY g.id;
+    `;
+    const rosterRes = await pool.query(rosterQ, [shop.id]);
+    shop.roster_today = rosterRes.rows;
+
+    const girlsQ = `
+      SELECT g.id, g.name, g.origin, g.profile_url, g.photo_url
+        FROM girls g
+       WHERE g.shop_id = $1
+       ORDER BY g.name;
+    `;
+    const girlsRes = await pool.query(girlsQ, [shop.id]);
+    shop.girls = girlsRes.rows;
+
+    res.json(shop);
   } catch (err) {
-    console.error(err);
+    console.error("❌ Error fetching shop:", err);
     res.status(500).json({ error: "Failed to fetch shop" });
   }
 });
