@@ -47,7 +47,7 @@ export default function ShopPage() {
   const [shop, setShop] = useState<Shop | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selected, setSelected] = useState<RosterItem | null>(null);
+  const [_selected, setSelected] = useState<RosterItem | null>(null);
 
   useEffect(() => {
     if (!slug) return;
