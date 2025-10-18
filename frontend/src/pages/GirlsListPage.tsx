@@ -215,7 +215,7 @@ export default function GirlsListPage() {
   return (
     <Stack spacing={2} sx={{ alignItems: "center" }}>
       <Typography variant="h5" sx={{ fontWeight: 600 }}>
-        👩 Girls — recent first · tap headers to sort
+        👩 Girls — Tap headers to sort
       </Typography>
 
       {/* Filters + search */}

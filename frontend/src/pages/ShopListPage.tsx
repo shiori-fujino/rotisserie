@@ -1,6 +1,4 @@
-//ShopListPage.tsx
-
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import {
   Button,
   Stack,
@@ -17,7 +15,10 @@ import {
   TableRow,
   TableContainer,
 } from "@mui/material";
+import { GoogleMap, InfoWindow, useLoadScript } from "@react-google-maps/api";
 import { Link } from "react-router-dom";
+  import drumstickIcon from "../assets/drumstick.svg"; // top of file
+
 
 /* ----------------------------- Types ----------------------------- */
 interface Shop {
@@ -53,14 +54,23 @@ export default function ShopListPage() {
   const [shops, setShops] = useState<Shop[]>([]);
   const [sortBy, setSortBy] = useState("name");
   const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
-const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:4000";
+  const [activeShop, setActiveShop] = useState<Shop | null>(null);
 
-  // Fake data
+  const mapRef = useRef<google.maps.Map | null>(null);
+  const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:4000";
+  const GOOGLE_KEY = import.meta.env.VITE_GOOGLE_MAPS_KEY as string;
+
+  const { isLoaded } = useLoadScript({
+    googleMapsApiKey: GOOGLE_KEY,
+    libraries: ["marker"],
+  });
+
+  /* -------------- Fetch data -------------- */
   useEffect(() => {
     fetch(`${API_BASE}/api/shops`)
-    .then((res) => res.json())
-    .then(setShops)
-    .catch(console.error);
+      .then((res) => res.json())
+      .then(setShops)
+      .catch(console.error);
   }, []);
 
   /* -------------- Near-me logic -------------- */
@@ -94,9 +104,35 @@ const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:4000";
     return 0;
   });
 
+  const defaultCenter = userCoords || { lat: -33.8688, lng: 151.2093 }; // Sydney
+
+  /* -------------- Marker creation -------------- */
+
+const onMapLoad = (map: google.maps.Map) => {
+  mapRef.current = map;
+  console.log("✅ Map loaded");
+
+  sorted
+    .filter((shop) => shop.lat && shop.lng)
+    .forEach((shop) => {
+      const marker = new google.maps.Marker({
+        position: { lat: shop.lat!, lng: shop.lng! },
+        map,
+        title: shop.name,
+        icon: {
+          url: drumstickIcon,
+          scaledSize: new google.maps.Size(36, 36),
+        },
+      });
+
+      marker.addListener("click", () => setActiveShop(shop));
+    });
+};
+
+
   /* ----------------------------- UI ----------------------------- */
   return (
-    <Stack spacing={2} className="p-4">
+    <Stack spacing={2} className="p-4" alignItems="center">
       <Typography variant="h5">🏠 All Shops</Typography>
 
       {/* ---- Controls ---- */}
@@ -117,8 +153,42 @@ const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:4000";
         </Button>
       </Stack>
 
+      {/* ---- Map ---- */}
+      {isLoaded ? (
+        <Paper sx={{ p: 1, width: "95vw", maxWidth: 1100, height: 400, borderRadius: 2 }}>
+          <GoogleMap
+            mapContainerStyle={{ width: "100%", height: "100%" }}
+            zoom={userCoords ? 12 : 10}
+            center={defaultCenter}
+            onLoad={onMapLoad}
+            options={{
+              mapTypeControl: false,
+              fullscreenControl: false,
+              streetViewControl: false,
+            }}
+          >
+            console.log("Map loaded 🗺️");
+
+            {activeShop && (
+              <InfoWindow
+                position={{ lat: activeShop.lat!, lng: activeShop.lng! }}
+                onCloseClick={() => setActiveShop(null)}
+              >
+                <div style={{ fontSize: 14 }}>
+                  <strong>{activeShop.name}</strong>
+                  <br />
+                  <a href={`/shops/${activeShop.slug}`}>View shop →</a>
+                </div>
+              </InfoWindow>
+            )}
+          </GoogleMap>
+        </Paper>
+      ) : (
+        <Typography variant="body2">Loading map...</Typography>
+      )}
+
       {/* ---- Table ---- */}
-      <TableContainer component={Paper} sx={{ borderRadius: 2 }}>
+      <TableContainer component={Paper} sx={{ borderRadius: 2, maxWidth: 1100 }}>
         <Table>
           <TableHead>
             <TableRow>
