@@ -31,13 +31,18 @@ g.cached_avg_rating AS avg_rating
   LEFT JOIN girl_views v ON v.girl_id = g.id
   
   -- ✅ KEY CHANGE: Try today first, fallback to yesterday if empty
-  WHERE r.date = (
-    CASE 
-      WHEN EXISTS (SELECT 1 FROM roster_entries WHERE date = (SELECT d FROM today))
-      THEN (SELECT d FROM today)
-      ELSE (SELECT d FROM yesterday)
-    END
+  WHERE (
+  r.date = (SELECT d FROM today)
+  OR (
+    r.date = (SELECT d FROM yesterday)
+    AND NOT EXISTS (
+      SELECT 1 FROM roster_entries r2
+      WHERE r2.shop_id = r.shop_id
+        AND r2.girl_id = r.girl_id
+        AND r2.date = (SELECT d FROM today)
+    )
   )
+)
   
   ORDER BY s.name, COALESCE(g.name, '') ASC;
   `;

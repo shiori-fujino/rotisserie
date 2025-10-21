@@ -1,6 +1,6 @@
 //homepage.tsx
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Container,
   Stack,
@@ -37,9 +37,10 @@ export default function HomePage() {
     layout: "grid",
   });
 
-  useMemo(() => {
+  useEffect(() => {
     if (data.length) setShuffled(shuffleArray(data));
   }, [data]);
+console.log("data length:", data.length, "shuffled:", shuffled.length);
 
   const handleShuffle = () => setShuffled((prev) => shuffleArray(prev));
 
