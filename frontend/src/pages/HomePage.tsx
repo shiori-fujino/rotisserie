@@ -158,7 +158,7 @@ const lastUpdated = useMemo(() => {
     >
       <strong>The Rotisserie</strong> Sydney’s hottest roster feed 🔥<br />
       <span style={{ opacity: 0.8 }}>
-        Browse, compare, and filter daily rosters — update 3 times daily, 12, 8 AM and 4 PM.
+        Browse, compare, and filter daily rosters — updated three times daily at 12 AM, 8 AM and 4 PM.
       </span>
     </Box>
 
