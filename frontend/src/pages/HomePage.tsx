@@ -112,23 +112,36 @@ const filtered = useMemo(() => {
 
 const lastUpdated = useMemo(() => {
   if (!shuffled.length) return null;
-  
-  const rosterDate = shuffled[0]?.date;
-  if (!rosterDate) return null;
-  
-  // Parse the date and format it nicely
-  const date = new Date(rosterDate);
-  return date.toLocaleString('en-AU', {
-    timeZone: 'Australia/Sydney',
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true
+
+  const raw = shuffled[0]?.date;
+  if (!raw) return null;
+
+  let date: Date | null = null;
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+    // backend sent "YYYY-MM-DD" only — treat as Sydney midnight
+    const [y, m, d] = raw.split("-").map(Number);
+    date = new Date(Date.UTC(y, m - 1, d, 0, 0)); // midnight Sydney-safe
+  } else {
+    // full ISO or timestamp string
+    date = new Date(raw);
+  }
+
+  if (isNaN(date.getTime())) return null;
+
+  return date.toLocaleString("en-AU", {
+    timeZone: "Australia/Sydney",
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
   });
 }, [shuffled]);
+
+
 
   return (
     <Layout onShuffle={handleShuffle}>
@@ -145,7 +158,7 @@ const lastUpdated = useMemo(() => {
     >
       <strong>The Rotisserie</strong> Sydney’s hottest roster feed 🔥<br />
       <span style={{ opacity: 0.8 }}>
-        Browse, compare, and filter daily rosters — updated nightly.
+        Browse, compare, and filter daily rosters — update 3 times daily, 12, 8 AM and 4 PM.
       </span>
     </Box>
 
