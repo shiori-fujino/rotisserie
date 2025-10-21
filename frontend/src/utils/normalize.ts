@@ -83,6 +83,6 @@ export function normalizeOrigin(raw: string): string {
     };
   
     const cleaned = raw.trim().toLowerCase();
-    return map[cleaned] || raw;
+    return map[cleaned] || "Other";
   }
   

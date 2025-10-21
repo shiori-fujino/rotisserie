@@ -2,28 +2,16 @@
 
 import { Router } from "express";
 import pool from "../db";
-
 const router = Router();
 
-const ORIGIN_MAP: Record<string, string> = {
-  J: "Japanese", JP: "Japanese", JAPANESE: "Japanese",
-  K: "Korean", KR: "Korean", KOREAN: "Korean",
-  C: "Chinese", CN: "Chinese", CHINESE: "Chinese",
-  TW: "Taiwanese", TAIWANESE: "Taiwanese",
-  V: "Vietnamese", VIET: "Vietnamese", VIETNAMESE: "Vietnamese",
-  T: "Thai", TH: "Thai", THAI: "Thai",
-  AU: "Australian", AUSSIE: "Australian", AUSTRALIAN: "Australian",
-};
-function normalizeOrigin(raw: string | null): string | null {
-  if (!raw) return null;
-  const key = raw.trim().toUpperCase();
-  return ORIGIN_MAP[key] || "Other";
-}
+// backend/src/routes/roster.ts
 
 router.get("/today", async (_req, res) => {
   const q = `
-  WITH today AS (SELECT (NOW() AT TIME ZONE 'Australia/Sydney')::date AS d)
+  WITH today AS (SELECT (NOW() AT TIME ZONE 'Australia/Sydney')::date AS d),
+       yesterday AS (SELECT (NOW() AT TIME ZONE 'Australia/Sydney' - INTERVAL '1 day')::date AS d)
   SELECT
+    -- ✅ Show today's date even if using yesterday's data
     (SELECT d FROM today) AS date,
     s.id   AS shop_id,
     s.name AS shop_name,
@@ -34,25 +22,23 @@ router.get("/today", async (_req, res) => {
     g.photo_url,
     r.shift_text,
     COALESCE(v.count, 0) AS views,
-
-    -- ✅ replies = text-only; avg rating computed in DB
-    COALESCE(c.replies_count, 0) AS replies_count,
-    c.avg_rating AS avg_rating
+    g.cached_replies_count AS replies_count,
+g.cached_avg_rating AS avg_rating
 
   FROM roster_entries r
   JOIN girls g ON g.id = r.girl_id
   JOIN shops s ON s.id = r.shop_id
   LEFT JOIN girl_views v ON v.girl_id = g.id
-  LEFT JOIN (
-  SELECT
-    r.girl_id,
-    COUNT(rep.id) AS replies_count,
-    ROUND(AVG(rep.rating)::numeric, 1) AS avg_rating
-  FROM roasts r
-  LEFT JOIN replies rep ON rep.roast_id = r.id
-  GROUP BY r.girl_id
-) c ON c.girl_id = g.id
-  WHERE r.date = (SELECT d FROM today)
+  
+  -- ✅ KEY CHANGE: Try today first, fallback to yesterday if empty
+  WHERE r.date = (
+    CASE 
+      WHEN EXISTS (SELECT 1 FROM roster_entries WHERE date = (SELECT d FROM today))
+      THEN (SELECT d FROM today)
+      ELSE (SELECT d FROM yesterday)
+    END
+  )
+  
   ORDER BY s.name, COALESCE(g.name, '') ASC;
   `;
 
@@ -69,7 +55,7 @@ router.get("/today", async (_req, res) => {
       grouped.get(row.shop_id)!.girls.push({
         id: row.girl_id,
         name: row.girl_name,
-        origin: normalizeOrigin(row.origin),
+        origin: row.origin,  // raw value, frontend will normalize
         shift: row.shift_text || "",
         profileUrl: row.profile_url,
         photoUrl: row.photo_url,

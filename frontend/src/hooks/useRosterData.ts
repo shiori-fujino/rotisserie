@@ -21,6 +21,7 @@ export default function useRosterData() {
             name: g.name,
             origin: g.origin,
             shop: shop.name,
+            date: json.date,
             profileUrl: g.profileUrl,
             photo: g.photoUrl,
             shift: g.shift || "",

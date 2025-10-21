@@ -34,7 +34,10 @@ def ensure_schema(cur) -> None:
       name        TEXT,
       origin      TEXT,
       profile_url TEXT UNIQUE,
-      photo_url   TEXT
+      photo_url   TEXT,
+      manual_override BOOLEAN DEFAULT FALSE,
+      cached_replies_count INT DEFAULT 0,
+      cached_avg_rating DECIMAL(3,1) DEFAULT 0
     );
 
     CREATE TABLE IF NOT EXISTS roster_entries (
@@ -89,25 +92,48 @@ def upsert_girl(cur, entry: dict, shop_id: int) -> Optional[int]:
     profile_url = entry.get("profile_link") or None
     if not profile_url:
         return None
+    
+    # ✅ CHECK if manual override is set
     cur.execute(
-        """
-        INSERT INTO girls (name, origin, photo_url, shop_id, profile_url)
-        VALUES (%s, %s, %s, %s, %s)
-        ON CONFLICT (profile_url) DO UPDATE
-          SET name      = EXCLUDED.name,
-              origin    = EXCLUDED.origin,
-              photo_url = EXCLUDED.photo_url,
-              shop_id   = EXCLUDED.shop_id
-        RETURNING id;
-        """,
-        (
-            entry.get("name"),
-            entry.get("origin_code") or None,
-            entry.get("photo") or None,
-            shop_id,
-            profile_url
-        )
+        "SELECT id, manual_override FROM girls WHERE profile_url = %s",
+        (profile_url,)
     )
+    existing = cur.fetchone()
+    
+    if existing and existing[1]:  # manual_override = True
+        # Don't update origin/name, only update photo/shop if needed
+        cur.execute(
+            """
+            UPDATE girls 
+            SET photo_url = COALESCE(%s, photo_url),
+                shop_id = %s
+            WHERE profile_url = %s
+            RETURNING id;
+            """,
+            (entry.get("photo") or None, shop_id, profile_url)
+        )
+    else:
+        # Normal upsert (scraper can overwrite)
+        cur.execute(
+            """
+            INSERT INTO girls (name, origin, photo_url, shop_id, profile_url, manual_override)
+            VALUES (%s, %s, %s, %s, %s, FALSE)
+            ON CONFLICT (profile_url) DO UPDATE
+              SET name      = EXCLUDED.name,
+                  origin    = EXCLUDED.origin,
+                  photo_url = EXCLUDED.photo_url,
+                  shop_id   = EXCLUDED.shop_id
+            RETURNING id;
+            """,
+            (
+                entry.get("name"),
+                entry.get("origin_code") or None,
+                entry.get("photo") or None,
+                shop_id,
+                profile_url
+            )
+        )
+    
     return cur.fetchone()[0]
 
 def upsert_roster_entry(cur, entry: dict, shop_id: int, girl_id: int) -> None:

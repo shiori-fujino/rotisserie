@@ -6,10 +6,15 @@ import { z } from "zod";
 
 const router = express.Router();
 
-const ADMIN_USER = process.env.ADMIN_USER || "admin";
-const ADMIN_PASS = process.env.ADMIN_PASS || "changeme";
-const JWT_SECRET = process.env.JWT_SECRET || "supersecret";
+const ADMIN_USER = process.env.ADMIN_USER;
+const ADMIN_PASS = process.env.ADMIN_PASS;
+const JWT_SECRET = process.env.JWT_SECRET;
 
+// Crash if any are missing (better than insecure defaults)
+if (!ADMIN_USER || !ADMIN_PASS || !JWT_SECRET) {
+  console.error("❌ Missing required env vars: ADMIN_USER, ADMIN_PASS, JWT_SECRET");
+  process.exit(1);
+}
 /* -------------------------------------------------------------------------- */
 /* Rate limiter (protect against brute force)                                 */
 /* -------------------------------------------------------------------------- */

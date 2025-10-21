@@ -16,14 +16,13 @@ export default function ensureAnonId(req: Request, res: Response, next: NextFunc
 
   if (!anon) {
     anon = uuidv4();
-    const oneYearMs = 1000 * 60 * 60 * 24 * 365;
-    const fiveYears = oneYearMs * 5;
+    const oneYear = 1000 * 60 * 60 * 24 * 365;
 
     res.cookie(COOKIE_NAME, anon, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: fiveYears,
+      maxAge: oneYear,
     });
   }
 

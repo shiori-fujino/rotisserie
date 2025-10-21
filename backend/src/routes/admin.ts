@@ -2,15 +2,31 @@
 import { Router } from "express";
 import pool from "../db";
 import { requireAdmin } from "../middleware/auth";
-import { normalizeOrigin } from "./normalize";
 
 const router = Router();
+const ALLOWED_TABLES = [
+  'shops',
+  'girls', 
+  'roasts',
+  'replies',
+  'blog_posts',
+  'contact_messages',
+  'site_visits',
+  'roster_entries',
+  'girl_views',
+] as const;
 
 router.get("/table", requireAdmin, async (req, res) => {
   const table = req.query.name as string;
-  if (!table) return res.status(400).json({ error: "Missing table name" });
+  if (!table || !ALLOWED_TABLES.includes(table as any)) {
+    return res.status(400).json({ 
+      error: "Invalid table name",
+      allowed: ALLOWED_TABLES 
+    });
+  }
 
   const { shop, origin, sort } = req.query;
+
   const page = Number(req.query.page) || 1;
   const limit = Math.min(Number(req.query.limit) || 50, 200);
   const offset = (page - 1) * limit;
@@ -58,24 +74,19 @@ router.get("/table", requireAdmin, async (req, res) => {
     ]);
 
     let rows = data.rows;
-    if (table === "girls") {
-      rows = rows.map((g: any) => ({
-        ...g,
-        origin: normalizeOrigin(g.origin),
-      }));
-    }
+
 
     // normalize all distinct origins globally
     const allOrigins =
-      table === "girls"
-        ? Array.from(
-            new Set(
-              distinctOrigins.rows
-                .map((r: any) => normalizeOrigin(r.origin))
-                .filter(Boolean)
-            )
-          ).sort()
-        : [];
+  table === "girls"
+    ? Array.from(
+        new Set(
+          distinctOrigins.rows
+            .map((r: any) => r.origin)  // raw values
+            .filter(Boolean)
+        )
+      ).sort()
+    : [];
 
     res.json({
       rows,
@@ -96,12 +107,12 @@ router.patch("/girl/:id", requireAdmin, async (req, res) => {
     const result = await pool.query(
       `UPDATE girls SET 
          name = COALESCE($1, name), 
-         origin = COALESCE($2, origin)
+         origin = COALESCE($2, origin),
+         manual_override = TRUE  -- ✅ ADD THIS
        WHERE id = $3
        RETURNING *`,
       [name, origin, id]
     );
-
     res.json({ updated: result.rows[0] });
   } catch (err) {
     console.error("admin update girl fail", err);

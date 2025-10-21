@@ -3,7 +3,7 @@ export interface RosterItem {
   id: number;
   shop: string;
   name: string;
-
+  date?: string;
   origin?: string;        // ✅ allow either pretty label or raw
   originCode?: string;    // ✅ raw code if available
   shift?: string;         // ✅ sometimes missing

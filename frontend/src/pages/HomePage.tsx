@@ -8,6 +8,7 @@ import {
   CircularProgress,
   Typography,
   Box,
+  Chip,
 } from "@mui/material";
 import useRosterData from "../hooks/useRosterData";
 import FiltersBar, { Filters } from "../components/FiltersBar";
@@ -15,7 +16,7 @@ import RosterGrid from "../components/RosterGrid";
 import GirlModal from "../components/GirlModal";
 import Layout from "../components/Layout";
 import type { RosterItem } from "../types";
-import Midnight from "./Midnight";
+import { normalizeOrigin } from "../utils/normalize";
 import ErrorDbPulling from "./ErrorDbPulling";
 
 function shuffleArray<T>(array: T[]): T[] {
@@ -26,8 +27,6 @@ function shuffleArray<T>(array: T[]): T[] {
 }
 
 export default function HomePage() {
-  const now = new Date();
-  const isMidnight = now.getHours() === 0 && now.getMinutes() < 10;
   const { data, loading, error } = useRosterData();
 
   const [shuffled, setShuffled] = useState<RosterItem[]>([]);
@@ -72,7 +71,6 @@ export default function HomePage() {
     );
   };
 
-  if (isMidnight) return <Midnight />;
   if (error) return <ErrorDbPulling />;
 
   const shops = useMemo(
@@ -80,24 +78,29 @@ export default function HomePage() {
     [shuffled]
   );
   const origins = useMemo(() => {
-    const uniq = Array.from(
-      new Set(
-        shuffled
-          .map((d) => d.origin)
-          .filter((o): o is string => Boolean(o))
-      )
-    );
-    return uniq.sort();
-  }, [shuffled]);
+  const normalized = shuffled
+    .map((d) => normalizeOrigin(d.origin || ""))
+    .filter((o): o is string => Boolean(o));
+
+  return Array.from(new Set(normalized)).sort((a, b) => {
+    if (a === "Other") return 1;  // Push "Other" to bottom
+    if (b === "Other") return -1;
+    return a.localeCompare(b);
+  });
+}, [shuffled]);
 
 const filtered = useMemo(() => {
   let out = shuffled;
 
-  // filter by shop & origin
+  // Filter by shop
   if (filters.shop) out = out.filter((d) => d.shop === filters.shop);
-  if (filters.origin) out = out.filter((d) => d.origin === filters.origin);
+  
+  // Filter by origin
+  if (filters.origin) {
+    out = out.filter((d) => normalizeOrigin(d.origin || "") === filters.origin);
+  }
 
-  // ✅ sort by views only
+  // ✅ ADD SORTING LOGIC (this was missing!)
   if (filters.sort === "popularity-desc") {
     out = [...out].sort((a, b) => (b.views ?? 0) - (a.views ?? 0));
   } else if (filters.sort === "popularity-asc") {
@@ -106,6 +109,26 @@ const filtered = useMemo(() => {
 
   return out;
 }, [shuffled, filters]);
+
+const lastUpdated = useMemo(() => {
+  if (!shuffled.length) return null;
+  
+  const rosterDate = shuffled[0]?.date;
+  if (!rosterDate) return null;
+  
+  // Parse the date and format it nicely
+  const date = new Date(rosterDate);
+  return date.toLocaleString('en-AU', {
+    timeZone: 'Australia/Sydney',
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true
+  });
+}, [shuffled]);
 
   return (
     <Layout onShuffle={handleShuffle}>
@@ -125,12 +148,20 @@ const filtered = useMemo(() => {
         Browse, compare, and filter daily rosters — updated nightly.
       </span>
     </Box>
-<FiltersBar
-          value={filters}
-          onChange={setFilters}
-          shops={shops}
-          origins={origins}
-        />
+
+{lastUpdated && (
+  <Typography variant="caption" color="text.secondary" sx={{ mb: 2, display: 'block' }}>
+    Last updated: {lastUpdated}
+  </Typography>
+)}
+
+      <FiltersBar
+        value={filters}
+        onChange={setFilters}
+        shops={shops}
+        origins={origins}
+      />
+
         <Divider sx={{ my: 2 }} />
 
         {loading && (

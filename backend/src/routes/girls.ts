@@ -2,11 +2,11 @@
 
 import { Router } from "express";
 import pool from "../db";
+import { asyncHandler } from "../middleware/errorHandler";
 
 const router = Router();
 
-router.get("/", async (_req, res) => {
-  try {
+router.get("/", asyncHandler(async (_req, res) => {
     const q = `
       SELECT 
         g.id,
@@ -17,7 +17,7 @@ router.get("/", async (_req, res) => {
         s.slug AS shop_slug,
         r.last_seen,
         COALESCE(v.views, 0) AS views,
-        COALESCE(rep.avg_rating, 0) AS avg_rating
+        g.cached_avg_rating AS avg_rating
       FROM girls g
       LEFT JOIN shops s ON s.id = g.shop_id
 
@@ -35,24 +35,11 @@ router.get("/", async (_req, res) => {
         GROUP BY girl_id
       ) v ON v.girl_id = g.id
 
-      -- ⭐️ average rating per girl (via roasts → replies)
-      LEFT JOIN (
-        SELECT ro.girl_id,
-               ROUND(AVG(rep.rating)::numeric, 1) AS avg_rating
-        FROM roasts ro
-        LEFT JOIN replies rep ON rep.roast_id = ro.id
-        GROUP BY ro.girl_id
-      ) rep ON rep.girl_id = g.id
-
       ORDER BY r.last_seen DESC NULLS LAST;
     `;
     const { rows } = await pool.query(q);
     res.json(rows);
-  } catch (err) {
-    console.error("Error fetching girls list:", err);
-    res.status(500).json({ error: "Server error" });
-  }
-});
+}));
 
 // GET /api/girls/:id — single girl by id
 router.get("/:id", async (req, res) => {
@@ -72,5 +59,6 @@ router.get("/:id", async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 });
+
 
 export default router;

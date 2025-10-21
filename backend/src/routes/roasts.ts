@@ -265,17 +265,42 @@ router.post("/:id/replies", async (req, res) => {
 
     // 4️⃣ insert the actual reply
     const result = await pool.query(
-      `INSERT INTO replies (roast_id, reply, user_mask, parent_id, rating)
-       VALUES ($1, $2, $3, $4, $5)
-       RETURNING *`,
-      [roastId, cleanedReply || null, anonId, parent_id || null, rating]
-    );
-
-    res.json(result.rows[0]);
-  } catch (err) {
-    console.error("Error posting reply:", err);
-    res.status(500).json({ error: "Failed to post reply" });
+    `INSERT INTO replies (roast_id, reply, user_mask, parent_id, rating)
+     VALUES ($1, $2, $3, $4, $5)
+     RETURNING *`,
+    [roastId, cleanedReply || null, anonId, parent_id || null, rating]
+  );
+const roastInfo = await pool.query(
+    "SELECT girl_id FROM roasts WHERE id = $1",
+    [roastId]
+  );
+  
+  if (roastInfo.rows[0]?.girl_id) {
+    const girlId = roastInfo.rows[0].girl_id;
+    
+    await pool.query(`
+      UPDATE girls g
+      SET 
+        cached_replies_count = (
+          SELECT COUNT(*) FROM replies r
+          JOIN roasts ro ON ro.id = r.roast_id
+          WHERE ro.girl_id = g.id
+        ),
+        cached_avg_rating = (
+          SELECT COALESCE(ROUND(AVG(rating)::numeric, 1), 0)
+          FROM replies r
+          JOIN roasts ro ON ro.id = r.roast_id
+          WHERE ro.girl_id = g.id AND r.rating IS NOT NULL
+        )
+      WHERE g.id = $1
+    `, [girlId]);
   }
+
+  res.json(result.rows[0]);
+} catch (err) {
+  console.error("Error posting reply:", err);
+  res.status(500).json({ error: "Failed to post reply" });
+}
 });
 
 /* -------------------------------------------------------------------------- */

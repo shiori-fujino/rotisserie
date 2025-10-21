@@ -5,14 +5,7 @@ import rateLimit, { Options } from "express-rate-limit";
 
 export const securityMiddleware = [
   helmet({
-    crossOriginResourcePolicy: { policy: "cross-origin" }, // allow images from other origins
-  }),
-  cors({
-    origin: [
-      "https://rotisserie.vercel.app",
-      "http://localhost:5173",
-    ],
-    credentials: false,
+    crossOriginResourcePolicy: { policy: "cross-origin" },
   }),
 ];
 
