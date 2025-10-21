@@ -40,7 +40,6 @@ export default function HomePage() {
   useEffect(() => {
     if (data.length) setShuffled(shuffleArray(data));
   }, [data]);
-console.log("data length:", data.length, "shuffled:", shuffled.length);
 
   const handleShuffle = () => setShuffled((prev) => shuffleArray(prev));
 
@@ -116,21 +115,16 @@ const lastUpdated = useMemo(() => {
   const raw = shuffled[0]?.date;
   if (!raw) return null;
 
-  let date: Date | null = null;
+  let date = new Date(raw);
 
-  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
-    // backend sent "YYYY-MM-DD" only — treat as Sydney midnight
-    const [y, m, d] = raw.split("-").map(Number);
-    date = new Date(Date.UTC(y, m - 1, d, 0, 0)); // midnight Sydney-safe
-  } else {
-    // full ISO or timestamp string
-    date = new Date(raw);
-  }
+  // Manually shift to Sydney timezone (AEST/AEDT)
+  // UTC +10 in winter, +11 in daylight saving.
+  const sydneyOffsetHours = 11; // change to 10 if it's winter
+  const localMillis =
+    date.getTime() + sydneyOffsetHours * 60 * 60 * 1000;
+  const sydneyDate = new Date(localMillis);
 
-  if (isNaN(date.getTime())) return null;
-
-  return date.toLocaleString("en-AU", {
-    timeZone: "Australia/Sydney",
+  return sydneyDate.toLocaleString("en-AU", {
     weekday: "long",
     day: "numeric",
     month: "long",
@@ -140,6 +134,8 @@ const lastUpdated = useMemo(() => {
     hour12: true,
   });
 }, [shuffled]);
+
+
 
 
 
