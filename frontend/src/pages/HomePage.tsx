@@ -110,21 +110,12 @@ const filtered = useMemo(() => {
 }, [shuffled, filters]);
 
 const lastUpdated = useMemo(() => {
-  if (!shuffled.length) return null;
+  if (!data.length || !data[0]) return null;
+  if (!data[0].updatedAt) return null;
 
-  const raw = shuffled[0]?.date;
-  if (!raw) return null;
-
-  let date = new Date(raw);
-
-  // Manually shift to Sydney timezone (AEST/AEDT)
-  // UTC +10 in winter, +11 in daylight saving.
-  const sydneyOffsetHours = 11; // change to 10 if it's winter
-  const localMillis =
-    date.getTime() + sydneyOffsetHours * 60 * 60 * 1000;
-  const sydneyDate = new Date(localMillis);
-
-  return sydneyDate.toLocaleString("en-AU", {
+  const date = new Date(data[0].updatedAt);
+  return date.toLocaleString("en-AU", {
+    timeZone: "Australia/Sydney",
     weekday: "long",
     day: "numeric",
     month: "long",
@@ -133,7 +124,7 @@ const lastUpdated = useMemo(() => {
     minute: "2-digit",
     hour12: true,
   });
-}, [shuffled]);
+}, [data]);
 
 
 

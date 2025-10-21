@@ -12,6 +12,7 @@ export default function useRosterData() {
       const res = await fetch(`${API_BASE}/api/roster/today`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = await res.json();
+        console.log("updatedAt (Sydney):", json.updatedAt);
 
       const items: RosterItem[] = [];
       for (const shop of json.shops) {

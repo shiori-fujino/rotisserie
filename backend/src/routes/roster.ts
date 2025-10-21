@@ -12,8 +12,8 @@ router.get("/today", async (_req, res) => {
       SELECT (NOW() AT TIME ZONE 'Australia/Sydney' - INTERVAL '1 day')::date AS d
     )
   SELECT
-    -- ✅ send full Sydney timestamp for accurate "last updated"
-    (NOW() AT TIME ZONE 'Australia/Sydney') AS updated_at,
+    -- ✅ full Sydney timestamp for frontend
+    to_char((NOW() AT TIME ZONE 'Australia/Sydney'), 'YYYY-MM-DD"T"HH24:MI:SS"+11:00"') AS updated_at,
     (SELECT d FROM today) AS date,
     s.id   AS shop_id,
     s.name AS shop_name,
@@ -35,8 +35,7 @@ router.get("/today", async (_req, res) => {
     OR (
       r.date = (SELECT d FROM yesterday)
       AND NOT EXISTS (
-        SELECT 1
-        FROM roster_entries r2
+        SELECT 1 FROM roster_entries r2
         WHERE r2.shop_id = r.shop_id
           AND r2.girl_id = r.girl_id
           AND r2.date = (SELECT d FROM today)
@@ -72,7 +71,7 @@ router.get("/today", async (_req, res) => {
 
     res.json({
       date,
-      updatedAt, // ✅ new field for accurate Sydney timestamp
+      updatedAt,
       shops: Array.from(grouped.values()),
     });
   } catch (err) {
