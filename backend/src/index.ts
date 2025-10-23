@@ -21,6 +21,7 @@ import roastsRouter from "./routes/roasts";
 import repliesRouter from "./routes/replies";
 import girlsRouter from "./routes/girls";
 import adminRoutes from "./routes/admin";
+import analyticsRoutes from "./routes/analytics";
 import { errorHandler } from "./middleware/errorHandler";
 
 
@@ -68,8 +69,7 @@ app.use("/api/visits", visitsRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/blog", blogRoutes);
 app.use("/api/admin", adminRoutes);
-
-app.use("/api/admin", adminRoutes);
+app.use("/api/analytics", analyticsRoutes);
 app.use(errorHandler);
 
 const PORT = Number(process.env.PORT || 4000);

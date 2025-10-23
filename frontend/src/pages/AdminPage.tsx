@@ -424,42 +424,7 @@ const [editLng, setEditLng] = useState("");
                         </Stack>
                       </TableCell>
                     )}
-                    {selectedTable === "blog_posts" && (
-        <TableCell>
-          <Stack direction="row" spacing={1}>
-            <Button
-              size="small"
-              variant="outlined"
-              onClick={() => {
-                setBlogTitle(row.title);
-                setBlogContent(row.content);
-                setBlogTab(0);
-                window.scrollTo({ top: 0, behavior: "smooth" });
-              }}
-            >
-              Edit
-            </Button>
-            <Button
-              size="small"
-              color="error"
-              variant="outlined"
-              onClick={async () => {
-                if (!window.confirm(`Delete "${row.title}"?`)) return;
-                try {
-                  await axios.delete(`/api/blog/${row.id}`, {
-                    headers: { Authorization: `Bearer ${token}` },
-                  });
-                  setRows((prev) => prev.filter((r) => r.id !== row.id));
-                } catch (err) {
-                  console.error("delete blog fail", err);
-                  alert("Failed to delete post.");
-                }
-              }}
-            >
-              Delete
-            </Button>
-          </Stack>
-        </TableCell>)}
+                    
                   </TableRow>
                 ))}
               </TableBody>

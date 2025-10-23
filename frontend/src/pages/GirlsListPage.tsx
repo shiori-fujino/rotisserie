@@ -25,6 +25,7 @@ import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 import ClearIcon from "@mui/icons-material/Clear";
 import { Link } from "react-router-dom";
 import { normalizeOrigin } from "../utils/normalize";
+import NationalityTrendsChart from "../components/NationalityTrendsChart";
 
 type SortKey = "views" | "avg_rating";
 type SortDir = "asc" | "desc";
@@ -135,13 +136,18 @@ export default function GirlsListPage() {
 
   /* -------- unique normalized origins -------- */
   const origins = useMemo(() => {
-    const set = new Set<string>();
-    girls.forEach((g) => {
-      const o = normalizeOrigin(g.origin || "");
-      if (o) set.add(o);
-    });
-    return Array.from(set).sort((a, b) => a.localeCompare(b));
-  }, [girls]);
+  const set = new Set<string>();
+  girls.forEach((g) => {
+    const o = normalizeOrigin(g.origin || "");
+    if (o) set.add(o);
+  });
+  return Array.from(set).sort((a, b) => {
+    // Always put "Other" at the end
+    if (a === "Other") return 1;
+    if (b === "Other") return -1;
+    return a.localeCompare(b);
+  });
+}, [girls]); 
 
   /* -------- sorting toggle -------- */
   const triggerSort = (key: SortKey) => {
@@ -217,7 +223,11 @@ export default function GirlsListPage() {
       <Typography variant="h5" sx={{ fontWeight: 600 }}>
         👩 Girls — Tap headers to sort
       </Typography>
-
+{!loading && processed.length > 0 && (
+        <Box sx={{ width: "95vw", maxWidth: 1100 }}>
+          <NationalityTrendsChart />
+        </Box>
+      )}
       {/* Filters + search */}
       <Stack
         direction="row"

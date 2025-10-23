@@ -72,21 +72,51 @@ export default function HomePage() {
 
   if (error) return <ErrorDbPulling />;
 
-  const shops = useMemo(
-    () => Array.from(new Set(shuffled.map((d) => d.shop).filter(Boolean))).sort(),
-    [shuffled]
-  );
-  const origins = useMemo(() => {
-  const normalized = shuffled
-    .map((d) => normalizeOrigin(d.origin || ""))
-    .filter((o): o is string => Boolean(o));
-
-  return Array.from(new Set(normalized)).sort((a, b) => {
-    if (a === "Other") return 1;  // Push "Other" to bottom
-    if (b === "Other") return -1;
-    return a.localeCompare(b);
+  // ✅ Calculate counts dynamically based on current filters
+const { shops, origins } = useMemo(() => {
+  // Calculate shop counts (filtered by origin if selected)
+  let shopBaseData = shuffled;
+  if (filters.origin) {
+    shopBaseData = shuffled.filter((d) => 
+      normalizeOrigin(d.origin || "") === filters.origin
+    );
+  }
+  
+  const shopCounts: Record<string, number> = {};
+  shopBaseData.forEach((d) => {
+    if (d.shop) {
+      shopCounts[d.shop] = (shopCounts[d.shop] || 0) + 1;
+    }
   });
-}, [shuffled]);
+  
+  // Calculate origin counts (filtered by shop if selected)
+  let originBaseData = shuffled;
+  if (filters.shop) {
+    originBaseData = shuffled.filter((d) => d.shop === filters.shop);
+  }
+  
+  const originCounts: Record<string, number> = {};
+  originBaseData.forEach((d) => {
+    const normalized = normalizeOrigin(d.origin || "");
+    if (normalized) {
+      originCounts[normalized] = (originCounts[normalized] || 0) + 1;
+    }
+  });
+  
+  return {
+    shops: Object.entries(shopCounts)
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => a.name.localeCompare(b.name)),
+    
+    origins: Object.entries(originCounts)
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => {
+        if (a.name === "Other") return 1;
+        if (b.name === "Other") return -1;
+        return a.name.localeCompare(b.name);
+      }),
+  };
+}, [shuffled, filters.shop, filters.origin]); // ✅ Recalculate when filters change
 
 const filtered = useMemo(() => {
   let out = shuffled;

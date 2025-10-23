@@ -32,7 +32,12 @@ export default function useRosterData() {
           });
         }
       }
-      setData(items);
+      setData(
+  items.map((it) => ({
+    ...it,
+    updatedAt: json.updatedAt, // ✅ attach timestamp to each roster item
+  }))
+);
       setError(null);
     } catch (err: any) {
       setError(err.message || "Failed to load data");
