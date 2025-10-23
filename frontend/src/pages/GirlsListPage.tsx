@@ -19,15 +19,22 @@ import {
   Pagination,
   TextField,
   IconButton,
+  Drawer,
+  Divider,
+  Chip,
+  Card,
+  CardContent,
 } from "@mui/material";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 import ClearIcon from "@mui/icons-material/Clear";
+import CloseIcon from "@mui/icons-material/Close";
+import StarIcon from "@mui/icons-material/Star";
 import { Link } from "react-router-dom";
 import { normalizeOrigin } from "../utils/normalize";
 import NationalityTrendsChart from "../components/NationalityTrendsChart";
 
-type SortKey = "views" | "avg_rating";
+type SortKey = "views" | "avg_rating" | "last_seen";
 type SortDir = "asc" | "desc";
 
 interface Girl {
@@ -39,6 +46,27 @@ interface Girl {
   last_seen?: string | null;
   avg_rating?: number | null;
   views?: number | null;
+}
+
+interface GirlDetail extends Girl {
+  photo_url?: string | null;
+  photos?: string[] | null;
+  bio?: string | null;
+  age?: number | null;
+  height?: number | null;
+  measurements?: string | null;
+  languages?: string[] | null;
+  services?: string[] | null;
+  reviews?: Review[] | null;
+  // add any other detailed fields you have
+}
+
+interface Review {
+  id: number;
+  rating: number;
+  comment: string;
+  created_at: string;
+  author?: string | null;
 }
 
 interface ShopMini {
@@ -100,10 +128,14 @@ export default function GirlsListPage() {
   const [filterShop, setFilterShop] = useState<string>("");
   const [searchName, setSearchName] = useState<string>("");
 
-  const [sortKey, setSortKey] = useState<SortKey>("views");
+  const [sortKey, setSortKey] = useState<SortKey>("last_seen");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [isSorting, setIsSorting] = useState(false);
   const [page, setPage] = useState(1);
+
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [selectedGirl, setSelectedGirl] = useState<GirlDetail | null>(null);
+  const [loadingDetail, setLoadingDetail] = useState(false);
 
   /* -------- fetch girls -------- */
   useEffect(() => {
@@ -198,14 +230,13 @@ export default function GirlsListPage() {
       rows.sort((a, b) => ((a.views ?? 0) - (b.views ?? 0)) * mult);
     } else if (sortKey === "avg_rating") {
       rows.sort((a, b) => ((a.avg_rating ?? 0) - (b.avg_rating ?? 0)) * mult);
+    } else if (sortKey === "last_seen") {
+      rows.sort((a, b) => {
+        const ta = a.last_seen ? new Date(a.last_seen).getTime() : 0;
+        const tb = b.last_seen ? new Date(b.last_seen).getTime() : 0;
+        return (ta - tb) * mult;
+      });
     }
-
-    // fallback: recent first
-    rows.sort((a, b) => {
-      const ta = a.last_seen ? new Date(a.last_seen).getTime() : 0;
-      const tb = b.last_seen ? new Date(b.last_seen).getTime() : 0;
-      return tb - ta;
-    });
 
     return rows;
   }, [girls, filterOrigin, filterShop, searchName, sortKey, sortDir]);
@@ -216,6 +247,49 @@ export default function GirlsListPage() {
     const start = (page - 1) * PAGE_SIZE;
     return processed.slice(start, start + PAGE_SIZE);
   }, [processed, page]);
+
+  /* -------- format date -------- */
+  const formatDate = (dateStr?: string | null) => {
+    if (!dateStr) return "—";
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) return "Today";
+    if (diffDays === 1) return "Yesterday";
+    if (diffDays < 7) return `${diffDays}d ago`;
+    if (diffDays < 30) return `${Math.floor(diffDays / 7)}w ago`;
+    if (diffDays < 365) return `${Math.floor(diffDays / 30)}mo ago`;
+    return date.toLocaleDateString();
+  };
+
+  /* -------- open girl details -------- */
+  const handleOpenGirl = async (girl: Girl) => {
+    setDrawerOpen(true);
+    setSelectedGirl(girl as GirlDetail); // Show basic data immediately
+    setLoadingDetail(true);
+    
+    try {
+      const response = await fetch(`${API_BASE}/api/girls/${girl.id}`);
+      if (!response.ok) throw new Error("Failed to fetch details");
+      const detailData: GirlDetail = await response.json();
+      setSelectedGirl(detailData);
+    } catch (error) {
+      console.error("Error fetching girl details:", error);
+      // Keep the basic data if fetch fails
+    } finally {
+      setLoadingDetail(false);
+    }
+  };
+
+  const handleCloseDrawer = () => {
+    setDrawerOpen(false);
+    setTimeout(() => {
+      setSelectedGirl(null);
+      setLoadingDetail(false);
+    }, 200);
+  };
 
   /* -------- render -------- */
   return (
@@ -341,7 +415,14 @@ export default function GirlsListPage() {
                       onToggle={() => triggerSort("avg_rating")}
                     />
                   </TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Shop</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    <SortHeader
+                      label="Last Seen"
+                      active={sortKey === "last_seen"}
+                      dir={sortDir}
+                      onToggle={() => triggerSort("last_seen")}
+                    />
+                  </TableCell>
                 </TableRow>
               </TableHead>
 
@@ -356,19 +437,26 @@ export default function GirlsListPage() {
                       transition: "background-color 120ms",
                     }}
                   >
-                    <TableCell>{g.name || "—"}</TableCell>
+                    <TableCell>
+                      <Typography
+                        component="span"
+                        sx={{
+                          color: "#e65100",
+                          fontWeight: 600,
+                          cursor: "pointer",
+                          "&:hover": { textDecoration: "underline", color: "#d84315" },
+                        }}
+                        onClick={() => handleOpenGirl(g)}
+                      >
+                        {g.name || "—"}
+                      </Typography>
+                    </TableCell>
                     <TableCell>{normalizeOrigin(g.origin || "—")}</TableCell>
                     <TableCell>{g.views ?? 0}</TableCell>
                     <TableCell>
                       {g.avg_rating != null ? Number(g.avg_rating).toFixed(1) : "—"}
                     </TableCell>
-                    <TableCell>
-                      {g.shop_slug ? (
-                        <Link to={`/shops/${g.shop_slug}`}>{g.shop_name}</Link>
-                      ) : (
-                        g.shop_name || "—"
-                      )}
-                    </TableCell>
+                    <TableCell>{formatDate(g.last_seen)}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -386,6 +474,231 @@ export default function GirlsListPage() {
           </Box>
         </>
       )}
+
+      {/* Girl Details Drawer */}
+      <Drawer
+        anchor="right"
+        open={drawerOpen}
+        onClose={handleCloseDrawer}
+        PaperProps={{
+          sx: { width: { xs: "100%", sm: 450, md: 550 } },
+        }}
+      >
+        {selectedGirl && (
+          <Box sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
+            {/* Header with close button */}
+            <Stack
+              direction="row"
+              justifyContent="space-between"
+              alignItems="center"
+              sx={{ p: 2, borderBottom: 1, borderColor: "divider" }}
+            >
+              <Typography variant="h5" sx={{ fontWeight: 700, color: "#e65100" }}>
+                {selectedGirl.name}
+              </Typography>
+              <IconButton onClick={handleCloseDrawer} size="small">
+                <CloseIcon />
+              </IconButton>
+            </Stack>
+
+            {/* Scrollable content */}
+            <Box sx={{ flex: 1, overflowY: "auto", p: 3 }}>
+              {loadingDetail && (
+                <Box sx={{ display: "flex", justifyContent: "center", mb: 3 }}>
+                  <CircularProgress size={30} />
+                </Box>
+              )}
+
+              {/* Photo */}
+              {selectedGirl.photo_url || selectedGirl.photos ? (
+                <Box sx={{ mb: 3 }}>
+                  {selectedGirl.photos && selectedGirl.photos.length > 0 ? (
+                    <Stack spacing={1}>
+                      {selectedGirl.photos.map((photo, idx) => (
+                        <Box
+                          key={idx}
+                          component="img"
+                          src={photo}
+                          alt={`${selectedGirl.name} ${idx + 1}`}
+                          sx={{
+                            width: "100%",
+                            borderRadius: 2,
+                            objectFit: "cover",
+                            maxHeight: 500,
+                          }}
+                        />
+                      ))}
+                    </Stack>
+                  ) : selectedGirl.photo_url ? (
+                    <Box
+                      component="img"
+                      src={selectedGirl.photo_url}
+                      alt={selectedGirl.name}
+                      sx={{
+                        width: "100%",
+                        borderRadius: 2,
+                        objectFit: "cover",
+                        maxHeight: 500,
+                      }}
+                    />
+                  ) : null}
+                </Box>
+              ) : !loadingDetail ? (
+                <Box
+                  sx={{
+                    width: "100%",
+                    height: 300,
+                    bgcolor: "grey.200",
+                    borderRadius: 2,
+                    mb: 3,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <Typography variant="body2" color="text.secondary">
+                    No photo available
+                  </Typography>
+                </Box>
+              ) : null}
+
+              {/* Stats Cards */}
+              <Stack direction="row" spacing={2} sx={{ mb: 3 }}>
+                {/* Average Rating */}
+                <Paper
+                  sx={{
+                    flex: 1,
+                    p: 2,
+                    bgcolor: "#fff3e0",
+                    borderRadius: 2,
+                    textAlign: "center",
+                  }}
+                >
+                  <Stack direction="row" alignItems="center" justifyContent="center" spacing={0.5}>
+                    <StarIcon sx={{ color: "#e65100", fontSize: 20 }} />
+                    <Typography variant="h5" sx={{ fontWeight: 700, color: "#e65100" }}>
+                      {selectedGirl.avg_rating != null
+                        ? Number(selectedGirl.avg_rating).toFixed(1)
+                        : "—"}
+                    </Typography>
+                  </Stack>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                    AVG RATING
+                  </Typography>
+                </Paper>
+
+                {/* Views */}
+                <Paper
+                  sx={{
+                    flex: 1,
+                    p: 2,
+                    bgcolor: "#f5f5f5",
+                    borderRadius: 2,
+                    textAlign: "center",
+                  }}
+                >
+                  <Typography variant="h5" sx={{ fontWeight: 700, color: "#e65100" }}>
+                    {selectedGirl.views ?? 0}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                    VIEWS
+                  </Typography>
+                </Paper>
+              </Stack>
+
+              {/* Shop Info */}
+              {selectedGirl.shop_name && (
+                <Paper sx={{ p: 2, mb: 3, borderRadius: 2, bgcolor: "#fafafa" }}>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                    SHOP
+                  </Typography>
+                  <Typography variant="body1" sx={{ mt: 0.5, fontWeight: 600 }}>
+                    {selectedGirl.shop_slug ? (
+                      <Link
+                        to={`/shops/${selectedGirl.shop_slug}`}
+                        style={{ color: "#e65100", textDecoration: "none" }}
+                      >
+                        {selectedGirl.shop_name}
+                      </Link>
+                    ) : (
+                      selectedGirl.shop_name
+                    )}
+                  </Typography>
+                </Paper>
+              )}
+
+              {/* Reviews/Roasts Section */}
+              <Box>
+                <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
+                  🔥 Roasts ({selectedGirl.reviews?.length || 0})
+                </Typography>
+
+                {selectedGirl.reviews && selectedGirl.reviews.length > 0 ? (
+                  <Stack spacing={2}>
+                    {selectedGirl.reviews.map((review) => (
+                      <Card key={review.id} variant="outlined" sx={{ borderRadius: 2 }}>
+                        <CardContent>
+                          {/* Rating stars */}
+                          <Stack direction="row" spacing={0.5} alignItems="center" sx={{ mb: 1 }}>
+                            {[...Array(5)].map((_, i) => (
+                              <StarIcon
+                                key={i}
+                                sx={{
+                                  fontSize: 18,
+                                  color: i < review.rating ? "#e65100" : "#e0e0e0",
+                                }}
+                              />
+                            ))}
+                            <Typography
+                              variant="body2"
+                              sx={{ ml: 1, fontWeight: 600, color: "text.secondary" }}
+                            >
+                              {review.rating}/5
+                            </Typography>
+                          </Stack>
+
+                          {/* Comment */}
+                          <Typography variant="body2" sx={{ mb: 1, lineHeight: 1.6 }}>
+                            {review.comment}
+                          </Typography>
+
+                          {/* Author & Date */}
+                          <Stack
+                            direction="row"
+                            justifyContent="space-between"
+                            alignItems="center"
+                            sx={{ mt: 1.5 }}
+                          >
+                            <Typography variant="caption" color="text.secondary">
+                              {review.author || "Anonymous"}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {formatDate(review.created_at)}
+                            </Typography>
+                          </Stack>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </Stack>
+                ) : (
+                  <Paper
+                    sx={{
+                      p: 3,
+                      textAlign: "center",
+                      bgcolor: "grey.50",
+                      borderRadius: 2,
+                    }}
+                  >
+                    <Typography variant="body2" color="text.secondary">
+                      No reviews yet
+                    </Typography>
+                  </Paper>
+                )}
+              </Box>
+            </Box>
+          </Box>
+        )}
+      </Drawer>
     </Stack>
   );
 }

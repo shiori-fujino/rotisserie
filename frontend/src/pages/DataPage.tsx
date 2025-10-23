@@ -8,7 +8,6 @@ import {
   CircularProgress,
 } from "@mui/material";
 import { API_BASE } from "../config";
-import NationalityTrendsChart from "../components/NationalityTrendsChart";
 
 interface Stats {
   daysOnline: number;
@@ -76,11 +75,6 @@ export default function DataPage() {
               <Typography variant="h4">{value as number}</Typography>
             </Paper>
           ))}
-        </Box>
-      )}
-      {!loading && stats && (
-        <Box sx={{ mt: 4 }}>
-          <NationalityTrendsChart />
         </Box>
       )}
     </Container>
