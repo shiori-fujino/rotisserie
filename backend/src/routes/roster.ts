@@ -47,19 +47,37 @@ router.get("/today", async (_req, res) => {
   try {
     const { rows } = await pool.query(q);
 
-    // ✅ filter strictly to today's rows if they exist
-    const todayDate = new Date()
-      .toLocaleDateString("en-CA", { timeZone: "Australia/Sydney" }); // e.g. 2025-10-27
-    const hasToday = rows.some((r) => r.date === todayDate);
+    // ✅ normalize Postgres dates to Sydney yyyy-mm-dd
+    function normalizeDate(d: any) {
+      return new Date(d).toLocaleDateString("en-CA", {
+        timeZone: "Australia/Sydney",
+      });
+    }
+
+    const todayDate = new Date().toLocaleDateString("en-CA", {
+      timeZone: "Australia/Sydney",
+    });
+
+    const normalized = rows.map((r) => ({
+      ...r,
+      normDate: normalizeDate(r.date),
+    }));
+
+    const hasToday = normalized.some((r) => r.normDate === todayDate);
     const filteredRows = hasToday
-      ? rows.filter((r) => r.date === todayDate)
-      : rows;
+      ? normalized.filter((r) => r.normDate === todayDate)
+      : normalized;
+
+    console.log("✅ todayDate:", todayDate);
+    console.log(
+      "✅ dates in payload:",
+      [...new Set(normalized.map((r) => r.normDate))].join(", ")
+    );
+    console.log("✅ filtered count:", filteredRows.length);
 
     const grouped = new Map<number, { id: number; name: string; girls: any[] }>();
-    const date = hasToday
-      ? todayDate
-      : rows[0]?.date ?? null;
-    const updatedAt = rows[0]?.updated_at ?? null;
+    const date = hasToday ? todayDate : normalized[0]?.normDate ?? null;
+    const updatedAt = normalized[0]?.updated_at ?? null;
 
     for (const row of filteredRows) {
       if (!grouped.has(row.shop_id)) {
