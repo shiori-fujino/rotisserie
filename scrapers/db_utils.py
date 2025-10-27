@@ -12,11 +12,30 @@ dotenv_path = os.path.join(os.path.dirname(__file__), ".env")
 if os.path.exists(dotenv_path):
     load_dotenv(dotenv_path)
     
+# db_utils.py
 def get_conn():
-    dsn = os.getenv("DATABASE_URL")
+    # Try private URL first (faster, no sleep)
+    dsn = os.getenv("DATABASE_PRIVATE_URL") or os.getenv("DATABASE_URL")
     if not dsn:
-        raise RuntimeError("DATABASE_URL not set (check .env locally or GitHub Actions secrets)")
-    return psycopg2.connect(dsn, sslmode="require")
+        raise RuntimeError("DATABASE_URL not set")
+    
+    # Add connection timeout + retry logic
+    import time
+    max_retries = 3
+    
+    for attempt in range(max_retries):
+        try:
+            return psycopg2.connect(
+                dsn, 
+                sslmode="require",
+                connect_timeout=30  # 30 second timeout
+            )
+        except psycopg2.OperationalError as e:
+            if attempt < max_retries - 1:
+                print(f"Connection failed, retrying in 10s... ({attempt + 1}/{max_retries})")
+                time.sleep(10)
+            else:
+                raise e
 
 # ---------- schema ----------
 def ensure_schema(cur) -> None:
