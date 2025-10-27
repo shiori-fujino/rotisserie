@@ -12,9 +12,8 @@ router.get("/today", async (_req, res) => {
       SELECT (NOW() AT TIME ZONE 'Australia/Sydney' - INTERVAL '1 day')::date AS d
     )
   SELECT
-    -- ✅ full Sydney timestamp for frontend
     to_char((NOW() AT TIME ZONE 'Australia/Sydney'), 'YYYY-MM-DD"T"HH24:MI:SS"+11:00"') AS updated_at,
-    (SELECT d FROM today) AS date,
+    r.date,
     s.id   AS shop_id,
     s.name AS shop_name,
     g.id   AS girl_id,
@@ -48,11 +47,21 @@ router.get("/today", async (_req, res) => {
   try {
     const { rows } = await pool.query(q);
 
+    // ✅ filter strictly to today's rows if they exist
+    const todayDate = new Date()
+      .toLocaleDateString("en-CA", { timeZone: "Australia/Sydney" }); // e.g. 2025-10-27
+    const hasToday = rows.some((r) => r.date === todayDate);
+    const filteredRows = hasToday
+      ? rows.filter((r) => r.date === todayDate)
+      : rows;
+
     const grouped = new Map<number, { id: number; name: string; girls: any[] }>();
-    const date = rows[0]?.date ?? null;
+    const date = hasToday
+      ? todayDate
+      : rows[0]?.date ?? null;
     const updatedAt = rows[0]?.updated_at ?? null;
 
-    for (const row of rows) {
+    for (const row of filteredRows) {
       if (!grouped.has(row.shop_id)) {
         grouped.set(row.shop_id, { id: row.shop_id, name: row.shop_name, girls: [] });
       }
